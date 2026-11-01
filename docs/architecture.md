@@ -46,7 +46,7 @@
 
 ### 题目页复制与代码编辑区（2026-09-28）
 
-- `ui-polish` 在普通题目和模测内题目挂载复制工具。源码按钮使用页面已有的同源 Markdown 链接，点击时读取独立源码页面的 `pre` 文本，保留原始空白，拒绝重定向和失败响应；有超时与取消处理。标题双击复制完整可见文本，反馈通过伪元素显示，不写入标题内容。
+- `ui-helpers` 在普通题目和模测内题目挂载复制工具。源码按钮使用页面已有的同源 Markdown 链接，点击时读取独立源码页面的 `pre` 文本，保留原始空白，拒绝重定向和失败响应；有超时与取消处理。标题双击复制完整可见文本，反馈通过伪元素显示，不写入标题内容。
 - 两项工具共用 `platform/clipboard.ts`：优先使用 Clipboard API，失败时通过临时只读文本框复制，完成后恢复焦点与选区。Scope 负责清理事件、按钮、提示属性和定时器，不增加剪贴板权限。
 - `site/code-editor.css` 根据原站 `#testcase-menu` 和 Monaco DOM 调整答案提交题的文件栏、边框、上传区及主题色，保留 Monaco 内部尺寸、字体和事件管理。传统代码题语言列表与答案提交题编辑列的高度统一为 480px。
 - 实页预览核对文件栏与编辑器尺寸、输入及清理、390px 下无新增横向溢出。格式、类型、生产构建与 ZIP 检查通过；高度调整在后续构建中生效。
@@ -152,9 +152,9 @@ Chrome 的 [后台生命周期](https://developer.chrome.com/docs/extensions/dev
 - 四组临时断言通过：域名/端口与协议/设置校验；并发字段写入与存储失败恢复；延迟加载取消、重复挂载、导航和资源清理；正式 Manifest 的权限及入口。
 - 临时断言使用现有开发依赖与 Node 内置断言执行，没有安装测试框架；验证后删除测试源文件和生成脚本。
 
-### 首个功能：界面微调
+### 首个功能：界面微调（后拆分为界面美化与辅助功能）
 
-- `ui-polish` 默认启用，通过现有目录元数据自动生成面板开关；旧设置缺少该字段时由解码器补齐，不变更设置版本。
+- 该功能后来拆成两个开关：`ui-theme`（界面美化，负责配色、圆角、间距与页面背景）与 `ui-helpers`（辅助功能，负责复制、筛选、目录与提示等页面操作）。两者都默认启用，通过目录元数据自动生成面板开关；旧设置里单一 `ui-polish` 的值在解码时同时带到两个新开关上，不变更设置版本。
 - 路径匹配和站点 CSS 放在 `src/site/appearance.ts`、`src/site/appearance.css` 与 `src/site/details.css`。最初覆盖首页和 `/problems` 路径族，现已扩展到下述主入口及详情页；独立编辑页面暂不应用。
 - 模块挂载带根属性作用域的样式表，停用时移除并恢复属性旧值。计划页的局部增强另见下文，不替换原有表格节点或编辑逻辑。
 - 在外网未登录首页及已登录习题列表预览同一份 CSS，确认面板圆角与阴影、背景、导航选中态及表格外观生效；首页 1280px 视口没有横向溢出，习题页导航高度、主容器宽度及状态图标颜色保持不变。移除预览后，习题页测量值恢复。临时预览不代表扩展面板开关和内网已完成验收。
@@ -162,7 +162,7 @@ Chrome 的 [后台生命周期](https://developer.chrome.com/docs/extensions/dev
 ### 主题配色
 
 - 设置新增 `accentColor`，缺省时兼容旧版的雾蓝；消息协议仅接受六位十六进制颜色，后台仍通过串行队列更新单个字段，避免与开关写入互相覆盖。
-- `ModuleContext` 携带挂载时的设置快照。页面配色由 `site/theme.ts` 独立更新 CSS 变量，切换颜色不再重新挂载 `ui-polish` 的日期目录；已移除未使用的 `configurationKey` 重启分支。
+- `ModuleContext` 携带挂载时的设置快照。页面配色由 `site/theme.ts` 独立更新 CSS 变量，切换颜色不再重新挂载 `ui-helpers` 的日期目录；已移除未使用的 `configurationKey` 重启分支。
 - `shared/palette.ts` 统一生成网页及面板预览的颜色变量，按需加深强调文字，保证相对于选中导航背景至少 4.5:1 的对比度。所有覆盖仍在可移除样式表内，不遗留行内样式。
 - 临时断言覆盖旧设置兼容、颜色输入校验、并发写入、4096 组颜色对比度、按配置重新挂载及失效加载清理，全部通过。生产面板在本地模拟扩展消息与存储接口下验证了预设、自定义、恢复默认、重载保留和暂停后恢复；真实扩展安装后的跨标签同步及内网仍待验收。临时验证脚本和服务验证完移除。
 
@@ -247,3 +247,75 @@ Chrome 的 [后台生命周期](https://developer.chrome.com/docs/extensions/dev
 - 原站更新会清空表体并重新插入全部行。宽表识别改为读取表头并添加标记，表格工具栏忽略成绩单元格变化；筛选缓存行资料并按帧合并结构更新。共享列宽的网格行使 `content-visibility: auto` 可以跳过屏幕外单元格的布局与绘制，原始行、单元格和链接保持连接，供原站更新与导出使用。打印及不支持该特性的浏览器回退为普通表格。
 - Chrome 实页预览验证了 573 人全量显示、学校和时年组合筛选、清空、滚动到末行、宽版与紧凑模式列对齐，以及停用后的节点和样式清理。将行倒序并恢复、两次强制读取表体高度，连续测量三次：前一版全部显示时为 901.3 / 1050.9 / 846.6 ms，网格行版本为 73.9 / 71.7 / 74.1 ms。此指标仅为本机浏览器端的合成重排耗时，不代表服务器响应、首屏加载或滚动帧率；预览注入功能代码，未重新加载已安装扩展。
 - 新增 6 项回归测试，覆盖 600 人单页全量、组合筛选、成绩更新不触发整表扫描、原地排序和资料变化、多表及替换清理、自动更新模式、原始导出节点保留。连同已有测试共 32 项通过。
+
+### 站点组件级样式表（2026-11-01）
+
+- 站点已登录路由引用的样式表完全相同且顺序一致（Semantic UI 2.4.1、`/self/style.css?20181212`、`tomorrow.css`、`math.css`、`morris.css` 与四个 Google 字体表），页面之间的外观差异来自 DOM 结构而不是样式表。因此把 `appearance.css`、`details.css`、`contest.css`、`problem-tools.css`、`account.css`、`forms.css`、`vjudge-accounts.css`、`dark.css`、`code-editor.css`、`chat.css`、`login.css` 合并为单一 `src/site/theme.css`，只保留一份组件级覆盖表。前文按页面拆分文件名的条目对应改造前的结构。
+- 覆盖表以站点组件和真实结构为依据：表格按是否直属于 `.padding`（`.ui.main.container > .padding > .ui.table`）和是否存在 `thead`（`:has(thead)`）区分卡片表、旧式首行表头与容器内表格；题目标题链接按 `a[href^="/problem/"]` 省略；vjudge 页面用嵌套 `.ui.main.container` 识别；其余由 `#chat-app`、`#submit_code`、`#submission_content`、`#bind-form` 等页面已有锚点限定。改造前统计过 379 条内部规则，其中 330 条带页面门控：124 条本身已有唯一锚点，删门控安全；131 条只含全站公共组件，需要按结构重新限定；真实跨页冲突只有 `.padding > h1` 与 `.ui.form textarea` 两处。
+- 不使用 CSS `@layer`：站点样式没有层，无层声明优先于任何有层的普通声明，一旦把覆盖规则放进层就会整体输给站点。层叠顺序改由单文件内的源码顺序表达（变量、外壳、面板、表格、表单、控件、内容、例外、暗色），并继续用 `html[data-asterveil-appearance="polished"]` 前缀压过 Semantic UI 的特异性。
+- 根节点不再设置 `data-asterveil-page`，只在站点有效且总开关与 `ui-theme` 开启时设置主题属性：`site/theme.ts` 的首屏守卫与更新改用 `resolveSite`，`update()` 不再接收 URL；`site/background.ts` 的自定义背景与 vjudge 标题规则改为同一站点级前缀，vjudge 标题由嵌套 `.ui.main.container` 结构判定。`site/appearance.ts` 的路径表保留，仅用于 JS 增强的挂载判断；新页面从此自动获得样式，无需补充匹配项。
+- 有意的观感变化：竞赛页标题 27px 与统计页 26px 统一为 28px；竞赛表格 12px 圆角、个人主页卡片内表格 4px 圆角统一为 10px（直属 `.padding` 的卡片表），嵌入 `.segment`、`.card`、`.td-fold` 的表格保留站点密度；提交列表不再压成 13px 字号与 8px 内边距，改回站点 14px 并配 `--av-cell-padding: 12px`；表单 textarea 统一 12px 内边距与 92px 最小高度；按钮、输入与菜单项统一 7px，面板 10px，容器 12px。旧式“首行当表头”表格去掉无效的 `top` 覆盖，只保留底色与 `z-index`；账号宽表原先按 `nth-child` 设定的列宽改为按链接语义设置最小/最大宽度。
+- 真实登录态验证：用 CDP 加载两版构建，抓取 26 条路由，全部带主题属性且扩展自身无脚本错误；改造前后对比 19 条路由的计算样式，只有上述观感变化。暗色与自定义背景在首页、习题、vjudge、提交详情与榜单同时生效。`npm test` 125 项、`npx tsc --noEmit`、`npm run build:all` 通过。
+- 新增 `build/audit-site-classes.mjs` 与 `src/site/covered-components.json`（`npm run audit:site`）：登录后抓取站点路由，收集实际出现的 Semantic UI 组件名并与覆盖清单比对，出现清单外组件时以退出码 1 报告。首次运行 26/32 条路由成功，清单外组件为 `dimmer`、`list`、`loader`、`search`、`tab`。随后为主题外的四类补了站点级规则：弹窗遮罩底色、加载转圈配色、题目搜索框与结果面板、横向统计列表间距；`tab` 只在首页仪表盘包裹已样式化的卡片，站点自身的标签结构与过渡保持不变，因此登记在清单的 `reviewed` 字段并附理由，审计不把该例外算作失败。当前运行结果：清单外组件为 0，退出码 0。
+- 站点侧栏在内容列内渲染，隐藏或展开一次后 Semantic UI 会把 `.ui.sidebar` 移动到 `body` 直下，原先挂在 `.ui.main.container` 下的按钮与标签规则随即失效，侧栏回到站点默认外观。主题因此把控件的站点级作用域写成 `:is(.ui.main.container, .ui.sidebar)`，并为侧栏补了折叠标题、`全部`/`模板` 标签、基础按钮与纵向按钮组的站点级规则；基础按钮的语义色由 Semantic UI 标为 `!important`，覆盖时同样需要 `!important`。实测学习与进度两页隐藏后再展开，侧栏外框、标题、条目按钮和标签的计算样式与初始状态一致，浅色与暗色均验证。
+- 扩展自造界面与站点覆盖表分离：`theme.css` 只保留站点 DOM 的覆盖；原先混在其中的 8 处「扩展自己创建的节点」样式（账号宽表、竞赛复盘按钮、题目复制标题与题面复制按钮、提交代码复制、聊天 Markdown、计划日期目录、vjudge OJ 选项）移到各自功能的样式表（`account-tables.css`、`contest-review.css`、`problem-title.css`、`problem-source.css`、`submission-code.css`、`chat-markdown.css`、`plans.css`、`vjudge-accounts.css`），由模块挂载时经 `site/inline-style.ts` 的 `useInlineStyle(scope, marker, css)` 注入，随 Scope 销毁移除。功能样式不带主题属性门控、变量一律写 `var(--av-*, 兜底值)`，关闭主题时功能界面仍然成形；路径表仍只决定这些增强何时挂载。
+- 拆分后实测：每页 `<style data-asterveil>` 标记与页面功能一一对应（题面 `problem-title`、提交 `submission-code`、竞赛 `contest-review`、计划 `plans`、标签宽表 `account-tables`、聊天 `chat-markdown`、vjudge `vjudge-accounts`），主题表固定 45,663 字符。主题的通用按钮底色特异性高于功能表，扩展自有按钮因此用 `!important` 并在文件头登记 lint 例外；计划周行的上下内边距改用与卡片表同等的作用域后实测为 14px。`npx tsc --noEmit`、`npm test` 125 项与两版构建通过。
+- 组件级覆盖的范围收敛：`.ui.mini.form` 是站点自己的单行筛选栏（评测、进度、模测三页），布局尺寸回到站点，只有输入框与下拉保留全站统一外观。表单的面板、字段间距、标签、`select` 高度、`textarea` 与提交按钮全部嵌套在同一个面板选择器 `.ui.form:not(:where(.ui.inline.form, .ui.mini.form))` 里，筛行与行内表单天然不参与，不再需要四处 `:not(.ui.mini.form)` 排除。站点的数据录入页会把 `.ui.form` 套在 `.padding > form` 里，两层都会命中面板规则，因此外层留框、内层用 `.padding > form .ui.form` 清零；面板规则的排除条件用 `:where()` 以免 `:not()` 抬高特异性、压过这层结构性清零。
+- 搜索框只换皮肤：站点给 `.ui.search` 内联了 `height:28px; margin-top:-5.3px`，输入框本身是 38px 并靠这个负边距与同排 mini 按钮居中对齐。早先为了让搜索框落在 28px 控件线上，覆盖了高度、行高、上下内边距并压掉负边距；现在这些尺寸覆盖全部删除，主题只保留边框、圆角、底色与文字色。实测工具栏行高 56.28px、输入框 38px、mini 按钮 28.3px、标签 19.5px，与不装扩展时完全一致。
+- 自定义背景下的固定底色：`site/background.ts` 早先给页脚备案号、`#show_tag` 与 vjudge 标题铺了半透明 chip 底，开启背景图后会变成一块固定白框，与"背景只作用于页面底层"的约定冲突。现在这些规则只调整文字色（`#show_tag > label` 需要 `!important` 覆盖站点内联样式），不再设置底色、内边距与圆角。
+- 中性按钮的底色：`--av-tint` 是给导航与选中项用的极浅底色，放到白页面或自定义背景上时按钮块几乎没有轮廓。因此新增 `--av-chip: color-mix(in srgb, var(--av-accent) 13%, var(--av-paper))`，只给中性按钮填充（`theme.css` 的 controls 段），文字仍是 `--av-accent`；不额外加边框，深色模式下同一表达式会自然混出略亮的块。实测榜单页三个筛选按钮底色由 `rgb(240 246 251)` 变为 `color(srgb 0.895 0.928 0.958)`（约 `rgb(228 237 244)`），高度仍为 28.28px，与输入框 30.27px 的基线关系不变。按钮填充与文字走 `--av-control-fill` / `--av-control-text` 两个变量，表单的提交按钮只在本元素上覆盖这两个变量即可取得主色，不必用更高特异性的选择器去压通用按钮规则。
+- 按钮组的圆角归属：`.ui.buttons` 的首尾圆角原先按水平组写死（首项左两角、末项右两角），侧栏的 `.ui.vertical.buttons` 也吃到了这套规则，于是题单按钮列的首项只有左侧圆角、末项只有右侧圆角。现在水平组保持原样，纵向组另加 `&.vertical > .ui.button` 的首项上两角、末项下两角（特异性高于原规则，顺序无关）；实测侧栏首项 `7px 7px 0 0`、末项 `0 0 7px 7px`，题面与竞赛页的水平操作组仍是 `7px 0 0 7px` / `0 7px 7px 0`，暗色同样成立。
+- 验证边界：截图与计算样式来自本机 Chrome 和真实登录态，只覆盖已抓取的 26 条路由；接口式页面 `/problem/:id/answers`、`/problem/:id/statistics` 与 `/progress/contests`、`/rpgain` 由站点返回错误页，未纳入外观验证。后台存储写入需要完整设置对象，缺少 `schemaVersion` 时解码器会拒绝，暗色验证改为驱动真实设置界面后再补背景。审计脚本的路由与数字 id 依赖站点现有记录，站点数据变化时需同步更新。
+### 现代视觉层（2026-11-01）
+
+- 新增 `src/site/effects.css`，由 `site/theme.ts` 在注入组件覆盖表时拼接到同一个 `<style data-asterveil="ui-polish">` 末尾（`${css}\n${effectsCss}`）：不新增样式节点、不依赖页面加载顺序，也没有把视觉层塞回 `theme.css`。
+- 画布从 `body` 提到根元素，玻璃才能隔着内容采样到它：`html[data-asterveil-appearance="polished"]` 铺 `--av-canvas`，`body` 与 `body > .pusher` 改透明。Semantic UI 用 `body.pushable { background:#545454 !important }` 铺灰底，透明声明必须同样带 `!important`，否则除首页外的页面会露出深灰；该文件因此登记一条文件级 `noImportantStyles` 例外并注明原因。
+- 页面背景就是一层很浅的渐变，没有动画：根元素 `background-image: linear-gradient(160deg, accent 5% 混进 canvas, accent 2%, canvas 72%)`（深色 7% / 3% / 74%），`background-attachment: fixed`，`data-asterveil-background`（自定义背景图）存在时整条让位。此前试过"光斑漂移""双图层反向呼吸""SVG 波浪带 + 点击水波"，都不够好：低 alpha 的圆斑让整页出现蓝/白不均，单图层平移看不出在动，多行波浪在浅色下又太像花纹，所以退回到最基础的一层浅渐变。动画层的代价也在这里写明：背景一动，上面每块玻璃都要逐帧重新采样模糊，只有肉眼明显时才值得。
+- 所有抬升表面都是玻璃：`@supports (backdrop-filter: blur(8px))` 内给 `.ui.segment`、`.ui.card`、`.ui.modal`、`.ui.popup`、`.ui.styled.accordion` 以及卡片表、页面级表单铺 `--av-glass`（纸色 78% + `blur(20px) saturate(1.18)`），因此无论有没有背景图、只用环境光时也是半透明。套在玻璃里的第二层（`.segment`/`.card`/`.accordion` 之间的嵌套）改用 `--av-glass-inset`（90% + `blur(14px)`），避免两层半透明叠加把文字洗淡；卡片表的 `thead th` 同样用 inset 值。
+- 浮动层单独给值：固定导航 78% 纸色 + `blur(18px) saturate(1.35)`、侧栏 84% + `blur(22px)`、下拉菜单 90% + `blur(16px)`、遮罩 `blur(2px)`；设置面板对话框由 94% 降到 86% 纸色，全部在同一 `@supports` 保护下。
+- 渐变与入场：品牌字标用 100deg 渐变 + `background-clip: text` + 10s 流动，导航底部 1px 渐变线 14s 流动，主容器 360ms `av-rise` 上浮；滚动阴影用 `animation-timeline: scroll(root block)` 在 72px 内渐变，不支持滚动驱动动画的浏览器只是没有这层阴影。
+- 悬停反馈只在 `hover: hover` 且无减少动态效果时启用：按钮上移 1px、按下 `scale(.985)`，卡片抬升 2px 加阴影，表格行底色过渡 160ms。
+- 加载层把 Semantic 的双色圆环换成 conic 渐变加径向遮罩（`mask: radial-gradient(farthest-side, transparent calc(100% - 3px), #000 0)`），保留站点自己的尺寸与旋转动画；`border` 需要 `!important` 才能压过站点 `.ui.dimmer .ui.loader:after`。打印时隐藏背景渐变与圆环。
+- 进度条填充改为 90deg 三段渐变加 7s 流动（`av-flow`），是唯一压在内容之上的动态渐变，进度文字仍在填充条上方。
+- 深色下站点给状态行铺的是带 `!important` 的近白底与 `!important` 深色字，因此暗色条目按状态色重新混出深色底（`color-mix(纸色 86%, 状态色)`）并同步文字色，两者都需要 `!important`。首页"近期表现"是站点直接下发的位图（`<img>`，白底不在 CSS 里），暗色下仍是白色，属站点内容。
+- 设置面板：对话框用 `@starting-style` 加 `display` 的离散过渡做 260ms 淡入上浮，遮罩 200ms 淡入；卡片挂载时 `av-card-in` 上浮 6px；卡片悬停抬升 2px，开关选中态改 96deg 渐变与回弹缓动，全部沿用 `--av-motion`（减少动态效果时为 0）。
+- 验证：`npx tsc --noEmit`、`npm test` 125 项、`npm run build:all`、改动文件的 `npx biome check` 通过；真实登录态下 26 条路由全部 `ok`，除站点自身两条 AMD 报错外扩展无脚本错误。实测根背景 `rgb(249,251,253)` + 一层 160deg 浅渐变、`body` 透明、卡片 `.ui.segment` 为 `color(srgb 1 1 1 / 0.78)` 且 `blur(20px) saturate(1.18)`、卡片表 `thead th` 为 90% 纸色、导航 78% 纸色 + `blur(18px) saturate(1.35)`、侧栏 84% + `blur(22px)`、品牌渐变 `av-flow`、主容器 `av-rise`、加载器 conic 渐变加遮罩；`prefers-reduced-motion: reduce` 下入场与悬停动画消失、玻璃仍在；暗色根背景 `rgb(19,22,24)`、状态行底色与文字均为深色混合值；开启星月夜背景（不透明度 8%）后渐变让位，卡片玻璃仍能透出图片（浅色与暗色各截一张）。
+- 验证边界：滚动驱动阴影只在支持 `animation-timeline` 的浏览器生效，未逐帧测量真实滚动；玻璃依赖 `backdrop-filter`，不支持时回退为不透明纸色；页面背景只有一层静态渐变，没有动效，未在超宽屏（>2560px）上确认渐变过渡的观感；深色截图仍能看到站点下发的白色图表位图与位图化的「近期表现」。
+
+### 复制题面并入辅助功能（2026-11-01）
+
+- 题目页的复制功能原先由独立模块 `problem-copy` 控制，模块目录多出一个只服务一个页面的开关，设置面板里还有三个复制选项开关。现在从 `moduleCatalog` 移除该条目，`ui-helpers` 在题目页挂载时直接调用 `enhanceProblemSource(scope, url)`：两个复制按钮随“辅助功能”开关启停，不提供任何复制选项开关，原站“题面源码”入口也不再隐藏。
+- 随之删除 `src/shared/problem-copy.ts` 与 `src/ui/settings/problem-copy.ts`，`Settings` 不再含 `problemCopy` 字段，`settings.problem-copy` 命令与校验一并移除；旧设置里的 `problemCopy` 和 `modules['problem-copy']` 在解码时被忽略，模块校验只按当前 `moduleCatalog` 进行。`ui-helpers` 也不再需要 `configurationKey`，关闭“辅助功能”时标题、操作提示与复制按钮一起移除。
+- 验证：`npx tsc --noEmit` 与 `node --test` 通过；两版 `tests/problem-copy.browser.mjs` 覆盖复制内容、辅助功能开关与界面美化独立、跨标签和模测题目。README 同步删除三个复制选项的说明。
+
+### 辅助功能改为总开关与分类子开关（2026-11-01）
+
+- 目录新增 `ModuleGroup`（编辑、复制、筛选与目录、页面整理、提示、聊天）与 `group` 字段：顶层仍为 `ui-helpers`（辅助功能）、`ui-theme`、`user-names`、`local-avatars`，子功能 `homework`、`copy-problem`、`submission-code`、`ranking-filters`、`contest-review`、`page-tidy`、`tips`、`chat-markdown` 各自带分组。`home-layout` 从目录移除。
+- 子功能仍是独立目录项，因此沿用 `settings.modules` 持久化、`settings.module` 协议校验与运行时网关；`ModuleDefinition` 增加可选 `enabled(settings)` 谓词，`runtime.reconcile` 在 `matches` 之后改用 `definition.enabled?.(settings) ?? settings.modules[id]`，八个子功能统一写 `settings.modules['ui-helpers'] && settings.modules[自身]`，实现“总开关 + 子开关”双门控。`homework` 的 id 未变，升级后保留原来的开关状态。
+- `features/registry.ts` 删除 `ui-helpers` 条目，`src/features/ui-helpers` 拆成七个薄封装目录（`copy-problem` 负责复制源码/描述按钮与标题双击复制，`tips` 只负责操作提示，`page-tidy` 负责登录、VJudge 账号、计划页与账号表格整理），`chat-markdown` 保持动态 import；新增 `tests/features-registry.test.mjs` 锁定“无 `ui-helpers` 条目、八个子模块双门控、各页 matches”。
+- 设置面板把辅助功能做成卡片（`data-module-id="ui-helpers"`）：顶部为主开关，下面按目录顺序渲染分组小标题与固定宽度的子开关（`.helper-group` 标题列加三列等宽 `.helper-items`，组内开关宽度一致、窄屏单列）；子开关 `checked=modules[id]`，`disabled=!enabled || !modules['ui-helpers']`，change 仍发 `settings.module`。子模块不再作为顶层行出现；头像替换卡片只放在“功能模块”，外观配色分区只显示界面美化与配色相关卡片。
+- 导航顺序改为 Better Names → 功能模块 → 外观配色 → 关于，默认停在 Better Names；删除首页布局设置分区、`src/ui/settings/home-layout.ts` 及相关样式与图标。
+- 验证：`npx tsc --noEmit`、`node --test` 130 项、`npm run build:all`、两版 `tests/problem-copy.browser.mjs` 通过；Playwright 载入 `.output/Asterveil` 检查导航顺序、分组数量（6 组 8 个开关）、关总开关后子开关禁用，截图在 `.tmp/merge-check`。
+
+### 首页布局改为页面内编辑（2026-11-01）
+
+- `createHomeLayout(scope, save)` 新增保存回调，由 `site.content.ts` 传入 `requestSettings`；在 `.ui.main.container` 内插入 `.asterveil-home-editor`：空闲时只显示网格图标按钮（`aria-label`“调整首页板块”），编辑时显示“完成”“恢复默认”和一行状态文字。
+- 每个板块标题内追加 `span.asterveil-home-tool`（拖动把手与显隐按钮）。隐藏板块在编辑态半透明加虚线框，仍可操作；拖动可跨左右栏，按指针位于标题上半/下半决定插入位置，空栏显示落点。键盘支持方向键栏内移动、左右键换栏、Home/End 首尾、Esc 退出。
+- 每次调整立即调用 `settings.home.move` / `visible` / `reset` 并乐观更新，失败回滚并显示短错误；`moveHomeSection` 结果与当前一致时不发请求。默认布局且未编辑时仍只保留入口按钮并还原原站 DOM，关闭扩展或离开首页时移除入口。
+- 页面样式由 `ensureBar()` 注入，空闲状态下的入口按钮也带样式；`restore()`/`removeBar()` 在无编辑时清掉样式表。
+- 验证：`tests/home-layout.test.mjs` 改为带 `save` 桩的 fixture，新增入口开合、显隐、方向键排序、恢复默认与退出还原等用例，`node --test` 130 项通过；`npm run build:all` 后 Playwright 载入两版构建，确认入口、编辑态、隐藏态与刷新后保持，截图在 `.tmp/merge-check`。
+### 设置面板配色区并排与背景预览（2026-11-01）
+
+- 设置面板“外观配色”分区把“主题配色”与“自定义背景”放进同一个 `.appearance-pair` 两列网格（窄屏单列）；两卡片等高，主题配色改为 4 列两行的色板并在卡片内垂直居中，“自定义背景”相应加高。
+- 背景卡片改为预览式交互：`#background-import` 是覆盖整块预览区的按钮，内部 `img#background-image` 显示已选图片，`#background-pick-label` 与 `image` 图标在未选图时提示“选择图片/正在处理…”；有图时 `data-has-image="true"` 隐藏提示、图片 `object-fit: cover` 铺满，点击图片重新选择。
+- 删除按钮 `#background-remove` 固定在预览右上角，默认透明，仅在预览悬停或键盘聚焦时可见（`aria-label`“移除背景图片”），`#background-image` 的 `hidden` 属性随 `data-has-image` 同步，避免出现空的图片框。
+- 辅助功能卡片的子开关统一为定宽标签；外观配色不再重复显示头像替换卡片（头像替换只在“功能模块”出现）。
+- 验证：`npx tsc --noEmit`、`node --test`、`npx biome check` 与 `npm run build:all` 通过；Playwright 载入 `.output/Asterveil` 检查并排等高、图片预览、悬停删除、浅色截图在 `.tmp/merge-check`。
+
+### 内置名单改为按高中毕业年份推算（2026-11-02）
+
+- 官方密文载荷升级为 `version: 2` 的 `{"academicYear":2026,"users":{"id":{"name","graduateYear"}}}`：在校年级存高中毕业年份，`by`/`jl`/`uk`/`clear` 等特殊状态仍存 `colorKey`；`parseUserNameSource` 新增 `graduateYear` 字段（四位数字或 1900–2100 的整数），解密后按当前学年现场换算 `UserGrade`。
+- `userGradeAcademicYear` 改为运行时计算：`currentUserGradeAcademicYear(now)` 在本地时间 9 月 1 日切换学年，下限为 `firstUserGradeAcademicYear`（2025）；`userGradeGraduateYear(grade)` 提供反推，供构建脚本把上游 `colorKey` 转成毕业年份。年级标签、经典配色按届映射与缓存版本号随之动态变化。
+- `build/update-user-names.mjs` 写入 `academicYear` + `users` 载荷，可接第 4 个参数补充 JSON（官方 ID 优先，只补新 ID）；`build/encrypt-user-names.mjs` 改为 `encryptUserNames(payload, password)`，统一校验记录并输出 `version: 2` 密文，运行时解密同时接受版本 1 与 2。
+- 官方数据由上游 3,567 条与补充 20 条（Better Names 计划 14 条、互关好友 6 条）合并为 3,587 条；补充记录只保留用户 ID、姓名与毕业年份/特殊分类，原始页面数据不进入仓库。
+- 验证：`npx tsc --noEmit`、`node --test` 131 项、`npm run build:all` 通过；临时脚本解密回读确认 3,587 条、UID 991 在 2026 学年为 g1、新增记录与年级分布一致。

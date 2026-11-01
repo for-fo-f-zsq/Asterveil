@@ -1,0 +1,16 @@
+/* biome-ignore-all lint/complexity/noImportantStyles: The extension owns this button; the site-wide theme paints every button and must not repaint it. */
+/* The review action the module appends to the contest toolbar. */
+.ui.main.container .ui.buttons > .ui.button[data-asterveil="contest-review"] {
+  background-color: var(--av-solid, var(--av-accent, #3b82c4)) !important;
+  color: var(--av-on-accent, #fff) !important;
+}
+
+.ui.main.container
+  .ui.buttons
+  > .ui.button[data-asterveil="contest-review"]:is(:hover, :focus-visible) {
+  background-color: color-mix(
+    in srgb,
+    var(--av-solid, var(--av-accent, #3b82c4)) 94%,
+    #000
+  ) !important;
+}

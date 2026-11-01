@@ -2,10 +2,13 @@ import { fontCss, layoutCss } from 'virtual:homework-katex';
 import type { Scope } from '../core/scope';
 import { renderMarkdown } from '../features/homework/markdown';
 import markdownCss from '../features/homework/markdown.css?inline';
+import css from './chat-markdown.css?inline';
+import { useInlineStyle } from './inline-style';
 
 export function enhanceChatMarkdown(scope: Scope): void {
   const messages = document.querySelector<HTMLElement>('#chat-messages');
   if (!messages || scope.signal.aborted) return;
+  useInlineStyle(scope, 'chat-markdown', css);
   const fonts = document.createElement('style');
   fonts.dataset.asterveil = 'chat-fonts';
   fonts.textContent = fontCss;

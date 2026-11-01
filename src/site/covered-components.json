@@ -1,0 +1,35 @@
+{
+  "components": [
+    "accordion",
+    "button",
+    "buttons",
+    "card",
+    "cards",
+    "checkbox",
+    "container",
+    "dimmer",
+    "dropdown",
+    "form",
+    "grid",
+    "header",
+    "image",
+    "input",
+    "label",
+    "list",
+    "loader",
+    "menu",
+    "message",
+    "modal",
+    "padding",
+    "pagination",
+    "popup",
+    "progress",
+    "search",
+    "segment",
+    "sidebar",
+    "table"
+  ],
+  "reviewed": {
+    "tab": "Home dashboard tabs only wrap cards that are already themed; the site keeps its own tab markup and transitions."
+  }
+}

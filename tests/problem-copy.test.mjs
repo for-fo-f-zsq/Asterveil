@@ -33,10 +33,6 @@ function load(path) {
   return exports;
 }
 const { problemDescription } = load('src/site/problem-description.ts');
-const { defaultSettings, decodeSettings } = load('src/shared/settings.ts');
-const { isSettingsRequest } = load('src/shared/protocol.ts');
-const { createSettingsService } = load('src/background/settings-service.ts');
-const plain = (value) => JSON.parse(JSON.stringify(value));
 
 test('description copying excludes surrounding sections and preserves code, formulas and subheadings', () => {
   const description = [
@@ -82,64 +78,4 @@ test('description headings accept Markdown variants without mistaking fenced cod
     '',
   ])
     assert.equal(problemDescription(source), undefined);
-});
-
-test('legacy settings gain copy preferences and malformed option messages cannot overwrite them', () => {
-  const old = plain(defaultSettings());
-  delete old.problemCopy;
-  delete old.modules['problem-copy'];
-  old.modules.homework = false;
-  old.accentColor = '#112233';
-  const decoded = decodeSettings(old);
-  assert.deepEqual(plain(decoded.problemCopy), {
-    source: true,
-    description: true,
-    hideOriginal: false,
-  });
-  assert.equal(decoded.modules['problem-copy'], true);
-  assert.equal(decoded.modules.homework, false);
-  assert.equal(decoded.accentColor, '#112233');
-  for (const problemCopy of [null, [], false, { source: 'yes' }, { hideOriginal: 1 }])
-    assert.throws(() => decodeSettings({ ...old, problemCopy }), /复制题面设置无效/);
-  for (const request of [
-    { option: 'unknown', enabled: true },
-    { option: 'source', enabled: 'true' },
-    { enabled: true },
-  ])
-    assert.equal(
-      isSettingsRequest({ channel: 'asterveil', type: 'settings.problem-copy', ...request }),
-      false,
-    );
-});
-
-test('copy options serialize with module and theme changes while preserving unrelated settings', async () => {
-  let stored = defaultSettings();
-  const service = createSettingsService(
-    {
-      read: async () => decodeSettings(plain(stored)),
-      write: async (next) => {
-        stored = next;
-      },
-    },
-    new Map(),
-  );
-  const names = plain(stored.userNames);
-  await Promise.all([
-    service({ type: 'settings.problem-copy', option: 'source', enabled: false }),
-    service({ type: 'settings.problem-copy', option: 'description', enabled: false }),
-    service({ type: 'settings.problem-copy', option: 'hideOriginal', enabled: true }),
-    service({ type: 'settings.module', moduleId: 'ui-polish', enabled: false }),
-    service({ type: 'settings.accent', color: '#abcdef' }),
-  ]);
-  assert.deepEqual(plain(stored.problemCopy), {
-    source: false,
-    description: false,
-    hideOriginal: true,
-  });
-  assert.equal(stored.modules['problem-copy'], true);
-  assert.equal(stored.modules['ui-polish'], false);
-  assert.equal(stored.accentColor, '#abcdef');
-  assert.deepEqual(plain(stored.userNames), names);
-  await service({ type: 'settings.module', moduleId: 'problem-copy', enabled: false });
-  assert.equal(stored.problemCopy.hideOriginal, true);
 });

@@ -136,7 +136,7 @@ test('style changes replace existing and new avatars, preserve other modules, an
       load: async () => avatarModule,
     },
     {
-      id: 'ui-polish',
+      id: 'ui-helpers',
       matches: () => true,
       load: async () => ({
         mount() {

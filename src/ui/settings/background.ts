@@ -1,6 +1,6 @@
 import type { Scope } from '../../core/scope';
 import { decodeBackgroundFile, encodeBackgroundImage } from '../../platform/background-image';
-import { previewBackgroundOverlay } from '../../shared/background-preview';
+import { previewBackgroundOpacity } from '../../shared/background-preview';
 import type { SettingsCommand } from '../../shared/protocol';
 import type { Settings } from '../../shared/settings';
 import { chooseBackgroundCrop } from './background-crop';
@@ -19,29 +19,39 @@ export function mountBackgroundSettings(
   const enabled = element<HTMLInputElement>('background-enabled');
   const file = element<HTMLInputElement>('background-file');
   const pick = element<HTMLButtonElement>('background-import');
+  const pickLabel = element<HTMLSpanElement>('background-pick-label');
+  const image = element<HTMLImageElement>('background-image');
   const remove = element<HTMLButtonElement>('background-remove');
-  const overlay = element<HTMLInputElement>('background-overlay');
-  const value = element<HTMLOutputElement>('background-overlay-value');
+  const overlay = element<HTMLInputElement>('background-opacity');
+  const value = element<HTMLOutputElement>('background-opacity-value');
   const message = element<HTMLParagraphElement>('background-status');
   let current: Settings | undefined;
   let busy = false;
   let previewValue: number | undefined;
   let previewRevision = 0;
-  scope.defer(() => previewBackgroundOverlay(undefined));
+  scope.defer(() => previewBackgroundOpacity(undefined));
 
   function render(settings = current) {
     current = settings;
     if (scope.signal.aborted) return;
     const background = settings?.background;
-    card.disabled = busy || !settings?.enabled || !settings.modules['ui-polish'];
+    card.disabled = busy || !settings?.enabled || !settings.modules['ui-theme'];
     enabled.checked = background?.enabled ?? false;
     enabled.setAttribute('aria-checked', String(enabled.checked));
     enabled.disabled = !background?.image;
-    remove.disabled = !background?.image;
-    overlay.disabled = !background?.image || !background.enabled;
-    overlay.value = String(previewValue ?? background?.overlay ?? 35);
+    const hasImage = Boolean(background?.image);
+    card.dataset.hasImage = String(hasImage);
+    pick.disabled = busy;
+    pick.setAttribute('aria-label', hasImage ? '更换背景图片' : '选择背景图片');
+    pickLabel.textContent = busy ? '正在处理…' : '选择图片';
+    image.hidden = !hasImage;
+    if (hasImage && background?.image) {
+      if (image.getAttribute('src') !== background.image) image.src = background.image;
+    } else if (image.hasAttribute('src')) image.removeAttribute('src');
+    remove.hidden = !hasImage;
+    overlay.disabled = !hasImage || !background?.enabled;
+    overlay.value = String(previewValue ?? background?.opacity ?? 65);
     value.value = `${overlay.value}%`;
-    pick.textContent = busy ? '正在处理…' : background?.image ? '更换图片' : '导入图片';
   }
 
   pick.addEventListener('click', () => file.click(), { signal: scope.signal });
@@ -96,7 +106,7 @@ export function mountBackgroundSettings(
       value.value = `${overlay.value}%`;
       previewValue = Number(overlay.value);
       previewRevision++;
-      previewBackgroundOverlay(previewValue);
+      previewBackgroundOpacity(previewValue);
     },
     { signal: scope.signal },
   );
@@ -104,10 +114,10 @@ export function mountBackgroundSettings(
     'change',
     async () => {
       const revision = previewRevision;
-      await save({ type: 'settings.background.overlay', overlay: Number(overlay.value) });
+      await save({ type: 'settings.background.opacity', opacity: Number(overlay.value) });
       if (revision !== previewRevision) return;
       previewValue = undefined;
-      previewBackgroundOverlay(undefined);
+      previewBackgroundOpacity(undefined);
       render();
     },
     { signal: scope.signal },

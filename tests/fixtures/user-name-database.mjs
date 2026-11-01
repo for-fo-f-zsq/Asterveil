@@ -2,6 +2,10 @@ import assert from 'node:assert/strict';
 import { cp, readdir, readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { encryptUserNames } from '../../build/encrypt-user-names.mjs';
+import {
+  userGradeAcademicYear,
+  userGradeGraduateYear,
+} from '../../src/shared/user-grade-year.ts';
 
 const encrypted = JSON.parse(
   await readFile(new URL('../../src/data/user-names.encrypted.json', import.meta.url), 'utf8'),
@@ -18,11 +22,21 @@ fixtureGrades['1'] = 'jl';
 fixtureGrades['5'] = 'g1';
 fixtureGrades['6'] = 'g2';
 fixtureGrades['2476'] = 'c1';
+const fixturePayload = {
+  academicYear: userGradeAcademicYear,
+  users: Object.fromEntries(
+    Object.entries(fixtureNames).map(([id, name]) => {
+      const grade = fixtureGrades[id];
+      const graduateYear = userGradeGraduateYear(grade);
+      return [id, graduateYear === undefined ? { name, colorKey: grade } : { name, graduateYear }];
+    }),
+  ),
+};
 
 export async function testUserNameExtension(source, destination) {
   // Exercise the actual unpacked extension with synthetic names and a public test password.
   // The production ciphertext and password are never decrypted or needed by this test.
-  const fixture = await encryptUserNames(fixtureNames, fixtureGrades, 2026, fixturePassword);
+  const fixture = await encryptUserNames(fixturePayload, fixturePassword);
   await cp(source, destination, { recursive: true });
   let replacements = 0;
   async function patch(directory) {

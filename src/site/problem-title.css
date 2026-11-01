@@ -1,0 +1,24 @@
+/* A copyable page title shows its confirmation right below the text. */
+.asterveil-copy-title {
+  position: relative;
+  cursor: copy;
+}
+
+.asterveil-copy-title[data-asterveil-copy-status]::after {
+  content: attr(data-asterveil-copy-status);
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  z-index: 1;
+  padding: 3px 9px;
+  border-radius: var(--av-radius-control, 7px);
+  background: var(--av-solid, var(--av-accent, #3b82c4));
+  color: var(--av-on-accent, #fff);
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.5;
+  white-space: nowrap;
+  pointer-events: none;
+  user-select: none;
+  transform: translateX(-50%);
+}

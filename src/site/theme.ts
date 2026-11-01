@@ -3,22 +3,19 @@ import { watchBackgroundPreview } from '../shared/background-preview';
 import { watchColorMode } from '../shared/color-mode';
 import { paletteVariables } from '../shared/palette';
 import type { Settings } from '../shared/settings';
-import { appearancePage } from './appearance';
 import { backgroundCss } from './background';
+import effectsCss from './effects.css?inline';
+import { resolveSite } from './target';
 import css from './theme.css?inline';
 
 // Pure CSS is installed at document_start; DOM enhancements wait until DOMContentLoaded.
 export function createPageTheme(scope: Scope, initialUrl: URL) {
   const root = document.documentElement;
-  const attributes = [
-    'data-asterveil-appearance',
-    'data-asterveil-page',
-    'data-asterveil-scheme',
-  ] as const;
+  const attributes = ['data-asterveil-appearance', 'data-asterveil-scheme'] as const;
   const previous = attributes.map((name) => root.getAttribute(name));
   const style = document.createElement('style');
-  style.dataset.asterveil = 'ui-polish';
-  style.textContent = css;
+  style.dataset.asterveil = 'ui-theme';
+  style.textContent = `${css}\n${effectsCss}`;
   const palette = document.createElement('style');
   palette.dataset.asterveil = 'palette';
   const background = document.createElement('style');
@@ -30,7 +27,7 @@ export function createPageTheme(scope: Scope, initialUrl: URL) {
     preview.textContent =
       value === undefined
         ? ''
-        : `@media screen { html[data-asterveil-appearance="polished"] { --av-background-strength: ${value}%; } }`;
+        : `@media screen { html[data-asterveil-appearance="polished"] { --av-background-strength: ${100 - value}%; } }`;
   });
   let lastBackground: Settings['background'] | undefined;
   let active = false;
@@ -48,6 +45,7 @@ export function createPageTheme(scope: Scope, initialUrl: URL) {
   const restore = () => {
     background.textContent = '';
     lastBackground = undefined;
+    root.removeAttribute('data-asterveil-background');
     if (!active) return;
     attributes.forEach((name, index) => {
       const value = previous[index];
@@ -63,7 +61,7 @@ export function createPageTheme(scope: Scope, initialUrl: URL) {
   guard.dataset.asterveil = 'initial-paint';
   guard.textContent = 'html[data-asterveil-loading] { visibility: hidden !important; }';
   const previousLoading = root.getAttribute('data-asterveil-loading');
-  let pending = Boolean(appearancePage(initialUrl));
+  let pending = Boolean(resolveSite(initialUrl));
   if (pending) {
     root.setAttribute('data-asterveil-loading', '');
     root.append(guard);
@@ -86,23 +84,26 @@ export function createPageTheme(scope: Scope, initialUrl: URL) {
     preview.remove();
   });
   return {
-    update(url: URL, settings: Settings | undefined) {
+    update(settings: Settings | undefined) {
       if (scope.signal.aborted) return;
       current = settings;
-      const page = appearancePage(url);
-      if (page && settings?.enabled && settings.modules['ui-polish']) {
+      if (settings?.enabled && settings.modules['ui-theme']) {
         root.setAttribute('data-asterveil-appearance', 'polished');
-        root.setAttribute('data-asterveil-page', page);
         active = true;
         setMode(settings.colorMode);
         if (
           lastBackground?.image !== settings.background.image ||
           lastBackground?.enabled !== settings.background.enabled ||
-          lastBackground?.overlay !== settings.background.overlay
+          lastBackground?.opacity !== settings.background.opacity
         ) {
           background.textContent = backgroundCss(settings.background);
           lastBackground = settings.background;
         }
+        // The ambient gradient steps aside while a custom background is shown.
+        root.toggleAttribute(
+          'data-asterveil-background',
+          settings.background.enabled && Boolean(settings.background.image),
+        );
       } else restore();
       clearTimeout(fallback);
       reveal();

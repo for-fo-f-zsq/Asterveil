@@ -1,14 +1,9 @@
 import type { Scope } from '../core/scope';
 import { copyText } from '../platform/clipboard';
-import { defaultProblemCopySettings, type ProblemCopySettings } from '../shared/problem-copy';
 import { problemDescription } from './problem-description';
 import css from './problem-source.css?inline';
 
-export function enhanceProblemSource(
-  scope: Scope,
-  url: URL,
-  options: ProblemCopySettings = defaultProblemCopySettings(),
-): void {
+export function enhanceProblemSource(scope: Scope, url: URL): void {
   const problemId = url.pathname.match(/\/problem\/(\d+)\/?$/)?.[1];
   if (!problemId) return;
   const sourceLink = [...document.querySelectorAll<HTMLAnchorElement>('a.ui.button[href]')].find(
@@ -39,30 +34,8 @@ export function enhanceProblemSource(
     });
   }
 
-  if (options.hideOriginal) {
-    const hidden = sourceLink.getAttribute('hidden');
-    const display = sourceLink.style.getPropertyValue('display');
-    const priority = sourceLink.style.getPropertyPriority('display');
-    sourceLink.hidden = true;
-    sourceLink.style.setProperty('display', 'none', 'important');
-    scope.defer(() => {
-      if (sourceLink.getAttribute('hidden') === '') {
-        if (hidden === null) sourceLink.removeAttribute('hidden');
-        else sourceLink.setAttribute('hidden', hidden);
-      }
-      if (
-        sourceLink.style.getPropertyValue('display') === 'none' &&
-        sourceLink.style.getPropertyPriority('display') === 'important'
-      ) {
-        if (display) sourceLink.style.setProperty('display', display, priority);
-        else sourceLink.style.removeProperty('display');
-      }
-    });
-  }
-
   let previous: Element = sourceLink;
   for (const kind of ['source', 'description'] as const) {
-    if (!options[kind]) continue;
     const label = kind === 'source' ? '复制源码' : '复制题目描述';
     const button = document.createElement('button');
     button.type = 'button';

@@ -53,7 +53,7 @@ test('old settings gain a complete default layout without changing existing modu
   old.modules.homework = false;
   const decoded = decodeSettings(old);
   assert.equal(decoded.homeLayout.length, 12);
-  assert.equal(decoded.modules['home-layout'], true);
+  assert.equal('home-layout' in decoded.modules, false);
   assert.equal(decoded.modules.homework, false);
   const partial = model.decodeHomeLayout([{ id: 'timer', column: 'main', visible: false }]);
   assert.equal(partial.length, 12);
@@ -119,6 +119,8 @@ function fixture() {
   let sequence = 0;
   const local = loader({
     document,
+    window,
+    Element: window.Element,
     HTMLElement: window.HTMLElement,
     MutationObserver: window.MutationObserver,
     requestAnimationFrame: (fn) => {
@@ -126,16 +128,29 @@ function fixture() {
       return sequence;
     },
     cancelAnimationFrame: (id) => frames.delete(id),
+    setTimeout: (fn, ms) => setTimeout(fn, ms),
+    clearTimeout: (id) => clearTimeout(id),
   });
   const { Scope } = local('src/core/scope.ts');
   const scope = new Scope();
-  const adapter = local('src/site/home-layout.ts').createHomeLayout(scope);
+  const commands = [];
+  const adapter = local('src/site/home-layout.ts').createHomeLayout(scope, async (command) => {
+    commands.push(command);
+  });
   const settings = defaultSettings();
   const main = document.querySelector('.ten.column');
   const side = document.querySelector('.six.column');
   const initial = document.querySelector('.padding').innerHTML;
   const update = (homeLayout) =>
     adapter.update(new URL('https://jx.7fa4.cn:8888/'), { ...settings, homeLayout });
+  const bar = () => document.querySelector('.asterveil-home-editor');
+  const headingOf = (id) => document.querySelector(`#block-${id}`).previousElementSibling;
+  const click = (element) => element.dispatchEvent(new window.Event('click', { bubbles: true }));
+  const press = (element, key) => {
+    const event = new window.Event('keydown', { bubbles: true });
+    Object.defineProperty(event, 'key', { value: key });
+    element.dispatchEvent(event);
+  };
   async function flush() {
     await Promise.resolve();
     for (const [id, fn] of frames) {
@@ -144,7 +159,23 @@ function fixture() {
     }
     await Promise.resolve();
   }
-  return { document, window, scope, adapter, settings, main, side, initial, update, flush };
+  return {
+    document,
+    window,
+    scope,
+    adapter,
+    settings,
+    main,
+    side,
+    initial,
+    update,
+    bar,
+    headingOf,
+    click,
+    press,
+    commands,
+    flush,
+  };
 }
 
 test('moves intact header/body pairs, retains listeners and restores exact original markup', () => {
@@ -223,4 +254,108 @@ test('reapplies saved layout after the site replaces the grid', async () => {
   assert.equal(main.firstElementChild.textContent, '计时器');
   f.scope.dispose();
   assert.equal(f.document.querySelector('.padding').innerHTML, f.initial);
+});
+
+test('the homepage entry opens an editor and hides sections on demand', async () => {
+  const f = fixture();
+  f.update(f.settings.homeLayout);
+  const bar = f.bar();
+  assert.ok(bar);
+  assert.equal(bar.parentElement, f.document.body);
+  assert.equal(
+    bar.querySelector('.asterveil-home-edit').getAttribute('aria-label'),
+    '调整首页板块',
+  );
+  assert.equal(f.document.querySelector('.asterveil-home-grip'), null);
+
+  f.click(bar.querySelector('.asterveil-home-edit'));
+  const grid = f.document.querySelector('.ui.grid');
+  assert.ok(grid.hasAttribute('data-av-home-editing'));
+  assert.equal(bar.querySelector('.asterveil-home-actions').hidden, false);
+  assert.equal(f.document.querySelectorAll('.asterveil-home-grip').length, 12);
+  assert.equal(f.document.querySelectorAll('.asterveil-home-eye').length, 12);
+
+  const eye = f.headingOf('timer').querySelector('.asterveil-home-eye');
+  assert.equal(eye.getAttribute('aria-pressed'), 'true');
+  f.click(eye);
+  await f.flush();
+  assert.deepEqual(plain(f.commands[0]), {
+    type: 'settings.home.visible',
+    id: 'timer',
+    visible: false,
+  });
+  assert.equal(eye.getAttribute('aria-pressed'), 'false');
+  assert.ok(f.document.querySelector('#block-timer').hasAttribute('data-av-home-hidden'));
+
+  f.update(
+    f.settings.homeLayout.map((item) => (item.id === 'timer' ? { ...item, visible: false } : item)),
+  );
+  assert.ok(f.document.querySelector('#block-timer').hasAttribute('data-av-home-hidden'));
+  f.scope.dispose();
+});
+
+test('the grip reorders sections with arrow keys', async () => {
+  const f = fixture();
+  f.update(f.settings.homeLayout);
+  f.click(f.bar().querySelector('.asterveil-home-edit'));
+
+  f.press(f.headingOf('recent').querySelector('.asterveil-home-grip'), 'ArrowUp');
+  await f.flush();
+  assert.deepEqual(plain(f.commands.at(-1)), {
+    type: 'settings.home.move',
+    id: 'recent',
+    column: 'main',
+    before: 'today',
+  });
+
+  f.press(f.headingOf('today').querySelector('.asterveil-home-grip'), 'ArrowRight');
+  await f.flush();
+  assert.deepEqual(plain(f.commands.at(-1)), {
+    type: 'settings.home.move',
+    id: 'today',
+    column: 'side',
+    before: null,
+  });
+
+  f.press(f.headingOf('links').querySelector('.asterveil-home-grip'), 'Home');
+  await f.flush();
+  assert.deepEqual(plain(f.commands.at(-1)), {
+    type: 'settings.home.move',
+    id: 'links',
+    column: 'side',
+    before: 'notifications',
+  });
+  f.scope.dispose();
+});
+
+test('reset restores the default order and finishing leaves original markup', async () => {
+  const f = fixture();
+  const custom = f.settings.homeLayout.map((item) =>
+    item.id === 'timer' ? { ...item, visible: false } : item,
+  );
+  f.update(custom);
+  f.click(f.bar().querySelector('.asterveil-home-edit'));
+  assert.ok(f.document.querySelector('.ui.grid').hasAttribute('data-av-home-editing'));
+
+  f.click(f.bar().querySelector('.asterveil-home-reset'));
+  await f.flush();
+  assert.deepEqual(plain(f.commands.at(-1)), { type: 'settings.home.reset' });
+  f.update(f.settings.homeLayout);
+
+  f.click(f.bar().querySelector('.asterveil-home-done'));
+  assert.equal(f.document.querySelector('[data-av-home-layout]'), null);
+  assert.equal(f.document.querySelector('.asterveil-home-grip'), null);
+  assert.equal(f.bar().querySelector('.asterveil-home-actions').hidden, true);
+  assert.equal(f.bar().classList.contains('is-editing'), false);
+  assert.equal(f.document.querySelector('.padding').innerHTML, f.initial);
+  f.scope.dispose();
+});
+
+test('the entry stays off other pages and when the extension is disabled', () => {
+  const f = fixture();
+  f.adapter.update(new URL('https://jx.7fa4.cn:8888/problems'), f.settings);
+  assert.equal(f.bar(), null);
+  f.adapter.update(new URL('https://jx.7fa4.cn:8888/'), { ...f.settings, enabled: false });
+  assert.equal(f.bar(), null);
+  f.scope.dispose();
 });

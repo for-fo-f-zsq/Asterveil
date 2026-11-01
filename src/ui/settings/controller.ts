@@ -2,7 +2,12 @@ import { browser } from 'wxt/browser';
 import type { Scope } from '../../core/scope';
 import { requestSettings } from '../../platform/settings-client';
 import { watchSettings } from '../../platform/settings-repository';
-import { type ModuleId, moduleCatalog } from '../../shared/catalog';
+import {
+  type ModuleEntry,
+  type ModuleGroup,
+  type ModuleId,
+  moduleCatalog,
+} from '../../shared/catalog';
 import { isColorMode } from '../../shared/color-mode';
 import { accentPresets, defaultAccentColor } from '../../shared/palette';
 import type { SettingsCommand } from '../../shared/protocol';
@@ -10,8 +15,6 @@ import type { Settings } from '../../shared/settings';
 import { mountAvatarSettings } from './avatars';
 import { mountBackgroundSettings } from './background';
 import { mountCommunitySettings } from './community';
-import { mountHomeLayoutSettings } from './home-layout';
-import { mountProblemCopySettings } from './problem-copy';
 import { mountUpdaterSettings } from './updater';
 import { mountUserNamePalette } from './user-name-palette';
 import { mountUserNameSources } from './user-name-sources';
@@ -34,12 +37,12 @@ export function mountSettings(root: ParentNode, scope: Scope): void {
   const modeInputs = Array.from(colorMode.querySelectorAll<HTMLInputElement>('input'));
   const presetInputs: HTMLInputElement[] = [];
   const inputs = new Map<ModuleId, HTMLInputElement>();
+  const helperInputs = new Map<ModuleId, HTMLInputElement>();
   let current: Settings | undefined;
   let pending = false;
   let pendingSaves = 0;
   let errorMessage = '';
   let storageChanges = 0;
-  const homeLayout = mountHomeLayoutSettings(root, scope, save);
   mountUpdaterSettings(root, scope);
   mountCommunitySettings(root, scope);
   const background = mountBackgroundSettings(root, scope, save);
@@ -53,17 +56,67 @@ export function mountSettings(root: ParentNode, scope: Scope): void {
   const nameSources = mountUserNameSources(root, scope, commitUserNames);
   const namePalette = mountUserNamePalette(root, scope, commitUserNames);
   let avatarControls: ReturnType<typeof mountAvatarSettings> | undefined;
-  let problemCopyControls: ReturnType<typeof mountProblemCopySettings> | undefined;
 
-  element('version').textContent = `v${browser.runtime.getManifest().version}`;
+  element('version').textContent = `v${browser.runtime.getManifest().version}-f`;
   element<HTMLFormElement>('settings-form').addEventListener(
     'submit',
     (event) => event.preventDefault(),
     { signal: scope.signal },
   );
 
+  // Submodules live as switches inside the 辅助功能 card, grouped in catalog order.
+  function createHelperGroups(): HTMLElement {
+    const groups = new Map<ModuleGroup, ModuleEntry[]>();
+    for (const entry of moduleCatalog) {
+      if (entry.group === null) continue;
+      const entries = groups.get(entry.group);
+      if (entries) entries.push(entry);
+      else groups.set(entry.group, [entry]);
+    }
+    const container = document.createElement('div');
+    container.className = 'helper-groups';
+    for (const [groupName, entries] of groups) {
+      const group = document.createElement('div');
+      group.className = 'helper-group';
+      const heading = document.createElement('h3');
+      heading.className = 'helper-group-title';
+      heading.textContent = groupName;
+      const items = document.createElement('div');
+      items.className = 'helper-items';
+      for (const entry of entries) {
+        const row = document.createElement('label');
+        row.className = 'helper-row';
+        const name = document.createElement('span');
+        name.className = 'helper-name';
+        name.textContent = entry.title;
+        const toggle = document.createElement('input');
+        toggle.type = 'checkbox';
+        toggle.setAttribute('role', 'switch');
+        toggle.setAttribute('aria-checked', 'false');
+        toggle.dataset.moduleId = entry.id;
+        if (entry.description) {
+          row.title = entry.description;
+          toggle.setAttribute('aria-description', entry.description);
+        }
+        toggle.addEventListener(
+          'change',
+          () => {
+            void save({ type: 'settings.module', moduleId: entry.id, enabled: toggle.checked });
+          },
+          { signal: scope.signal },
+        );
+        row.append(name, toggle);
+        items.append(row);
+        helperInputs.set(entry.id, toggle);
+      }
+      group.append(heading, items);
+      container.append(group);
+    }
+    return container;
+  }
+
   for (const module of moduleCatalog) {
-    if (module.id === 'home-layout') continue;
+    if (module.group !== null) continue;
     const label = document.createElement('label');
     label.className = 'module row settings-card';
     label.dataset.moduleId = module.id;
@@ -87,17 +140,22 @@ export function mountSettings(root: ParentNode, scope: Scope): void {
       input.setAttribute('aria-description', module.description);
     }
     label.append(text, input);
-    if (module.id === 'local-avatars' || module.id === 'problem-copy') {
+    if (module.id === 'ui-helpers' || module.id === 'local-avatars') {
       const card = document.createElement('div');
       card.className = 'module settings-card';
       card.dataset.moduleId = module.id;
       label.className = 'row';
       card.append(label);
       if (module.id === 'local-avatars') avatarControls = mountAvatarSettings(card, scope, save);
-      else problemCopyControls = mountProblemCopySettings(card, scope, save);
+      else card.append(createHelperGroups());
       list.append(card);
     } else list.append(label);
-    if (module.id === 'ui-polish') list.append(colorMode, palette, element('background'));
+    if (module.id === 'ui-theme') {
+      const pair = document.createElement('div');
+      pair.className = 'appearance-pair';
+      pair.append(palette, element('background'));
+      list.append(colorMode, pair);
+    }
     inputs.set(module.id, input);
   }
 
@@ -157,12 +215,10 @@ export function mountSettings(root: ParentNode, scope: Scope): void {
 
   function render(): void {
     if (scope.signal.aborted) return;
-    homeLayout.render(current);
     background.render(current);
     nameSources.render(current);
     namePalette.render(current);
     avatarControls?.render(current);
-    problemCopyControls?.render(current);
     controls.disabled = pending || !current;
     enabled.checked = current?.enabled ?? false;
     enabled.setAttribute('aria-checked', String(enabled.checked));
@@ -171,7 +227,12 @@ export function mountSettings(root: ParentNode, scope: Scope): void {
       input.setAttribute('aria-checked', String(input.checked));
       input.disabled = !current?.enabled;
     }
-    palette.disabled = !current?.enabled || !current.modules['ui-polish'];
+    for (const [id, input] of helperInputs) {
+      input.checked = current?.modules[id] ?? false;
+      input.setAttribute('aria-checked', String(input.checked));
+      input.disabled = !current?.enabled || !current.modules['ui-helpers'];
+    }
+    palette.disabled = !current?.enabled || !current.modules['ui-theme'];
     for (const input of modeInputs) input.checked = input.value === (current?.colorMode ?? 'light');
     accentColor.value = current?.accentColor ?? defaultAccentColor;
     updateSwatches(accentColor.value);

@@ -34,28 +34,37 @@ function load(path) {
 }
 const { decryptUserNames } = load('src/shared/user-name-encryption.ts');
 const { officialUserNamePassword } = load('src/site/official-user-name-password.ts');
+const year = load('src/shared/user-grade-year.ts');
 const plain = (value) => JSON.parse(JSON.stringify(value));
 const password = 'fixture-only-e\u0301';
-const names = { 1: '测试教练', 2476: '测试空昵称', 900000001: '测试学生' };
-const grades = { 1: 'jl', 2476: 'c1', 900000001: 'g1' };
+const payload = {
+  academicYear: year.userGradeAcademicYear,
+  users: {
+    1: { name: '测试教练', colorKey: 'jl' },
+    2476: { name: '测试空昵称', colorKey: 'c1' },
+    900000001: { name: '测试学生', graduateYear: 2029 },
+  },
+};
 
 test('the build encryptor interoperates with runtime decryption and authenticates metadata', async () => {
-  const encrypted = await encryptUserNames(names, grades, 2026, ` ${password}\n`);
-  const second = await encryptUserNames(names, grades, 2026, password);
+  const encrypted = await encryptUserNames(payload, ` ${password}\n`);
+  const second = await encryptUserNames(payload, password);
+  assert.equal(encrypted.version, 2);
   assert.notEqual(encrypted.salt, second.salt);
   assert.notEqual(encrypted.iv, second.iv);
   assert.notEqual(encrypted.ciphertext, second.ciphertext);
-  assert.ok(!JSON.stringify(encrypted).includes(names['2476']));
+  assert.ok(!JSON.stringify(encrypted).includes(payload.users['2476'].name));
   assert.deepEqual(plain(await decryptUserNames(encrypted, password.normalize('NFC'))), [
     ['1', '测试教练', 'jl'],
     ['2476', '测试空昵称', 'c1'],
-    ['900000001', '测试学生', 'g1'],
+    ['900000001', '测试学生', year.graduateYearUserGrade(2029)],
   ]);
   for (const tampered of [
     { ...encrypted, academicYear: 2025 },
     { ...encrypted, records: 2 },
     { ...encrypted, iterations: 1 },
-    { ...encrypted, version: 2 },
+    { ...encrypted, version: 1 },
+    { ...encrypted, version: 3 },
     { ...encrypted, ciphertext: `A${encrypted.ciphertext.slice(1, -1)}B` },
     { ...encrypted, iv: 'invalid' },
   ])

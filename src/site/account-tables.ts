@@ -1,8 +1,11 @@
 import type { Scope } from '../core/scope';
+import css from './account-tables.css?inline';
+import { useInlineStyle } from './inline-style';
 
 export function enhanceAccountTables(scope: Scope) {
   const main = document.querySelector<HTMLElement>('.ui.main.container');
   if (!main) return;
+  useInlineStyle(scope, 'account-tables', css);
 
   const toolbar = document.createElement('div');
   toolbar.className = 'asterveil-table-toolbar';

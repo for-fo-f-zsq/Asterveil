@@ -1,5 +1,10 @@
 import { isAccentColor } from './palette';
-import { advanceUserGrade, cohortUserGrade, userGradeAcademicYear } from './user-grade-year';
+import {
+  advanceUserGrade,
+  cohortUserGrade,
+  firstUserGradeAcademicYear,
+  userGradeAcademicYear,
+} from './user-grade-year';
 
 export const userGradeDefinitions = [
   { key: 'x4', label: `小${userGradeAcademicYear - 3}级`, color: '#96328c' },
@@ -52,9 +57,12 @@ export const classicUserGradeColors: Readonly<Record<UserGradeKey, string>> = {
   jl: '#ff85c0',
   uk: '#5e6e5e',
 };
-// Classic colors belong to the 2025 cohorts, including students promoted to a new school stage.
+// Classic colors belong to the first supported cohorts, including students promoted to a new stage.
 const classicCohortColors = new Map<UserGrade, string>(
-  userGradeDefinitions.map(({ key }) => [advanceUserGrade(key, 2025), classicUserGradeColors[key]]),
+  userGradeDefinitions.map(({ key }) => [
+    advanceUserGrade(key, firstUserGradeAcademicYear),
+    classicUserGradeColors[key],
+  ]),
 );
 const labels = new Map<string, UserGradeKey>(
   userGradeDefinitions.map(({ key, label }) => [label, key]),

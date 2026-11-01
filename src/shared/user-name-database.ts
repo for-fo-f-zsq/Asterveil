@@ -16,4 +16,4 @@ export function userNameEntryDatabase(entries: readonly UserNameEntry[]): Offici
 }
 
 export const decryptOfficialUserNames = (password: string) => decryptUserNames(database, password);
-export const officialUserNameDatabaseRevision = `${database.academicYear}:${database.iv}`;
+export const officialUserNameDatabaseRevision = `${database.version}:${database.academicYear}:${database.iv}`;

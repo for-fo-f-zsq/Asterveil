@@ -1,8 +1,4 @@
 const paths = {
-  home: '<path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1Z"/>',
-  grip: '<path d="M9 5h.01M15 5h.01M9 12h.01M15 12h.01M9 19h.01M15 19h.01" stroke-width="3"/>',
-  up: '<path d="m6 14 6-6 6 6"/>',
-  down: '<path d="m6 10 6 6 6-6"/>',
   right: '<path d="m9 5 7 7-7 7"/>',
   check: '<path d="m5 12 4 4L19 6"/>',
   github:
@@ -25,6 +21,8 @@ const paths = {
   monitor: '<rect x="3" y="4" width="18" height="13" rx="2"/><path d="M12 17v4m-4 0h8"/>',
   pipette:
     '<path d="m14 5 5 5m-4-6 1-1a2.1 2.1 0 0 1 3 3l-1 1 2 2-3 3-2-2-8 8-4 1 1-4 8-8-2-2 3-3Z"/>',
+  image:
+    '<rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="8.5" cy="9.5" r="1.5"/><path d="m4 17 5-5 3.5 3.5L16 12l4 4"/>',
   close: '<path d="m6 6 12 12M6 18 18 6"/>',
 } as const;
 

@@ -1,8 +1,11 @@
 import type { Scope } from '../core/scope';
+import { useInlineStyle } from './inline-style';
+import css from './plans.css?inline';
 
 export function enhancePlans(scope: Scope): void {
   const table = document.querySelector<HTMLTableElement>('.ui.main.container .padding > table.ui');
   if (!table) return;
+  useInlineStyle(scope, 'plans', css);
   const directory = document.createElement('nav');
   directory.className = 'asterveil-plan-index';
   directory.setAttribute('aria-label', '计划日期');

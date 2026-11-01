@@ -84,7 +84,8 @@ for (const product of ['Asterveil', 'Asterveil Pro']) {
           enabled: false,
           colorMode: 'light',
           modules: {
-            'ui-polish': false,
+            'ui-theme': false,
+            'ui-helpers': false,
             'local-avatars': false,
             'user-names': false,
             'home-layout': false,
@@ -238,7 +239,7 @@ for (const product of ['Asterveil', 'Asterveil Pro']) {
       [390, 'dark'],
       [1440, 'light'],
     ]) {
-      await update({ modules: { 'ui-polish': true }, colorMode: scheme });
+      await update({ modules: { 'ui-theme': true }, colorMode: scheme });
       await page.setViewportSize({ width, height: 900 });
       await accurate();
       await page

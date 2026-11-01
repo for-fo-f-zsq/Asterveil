@@ -70,24 +70,15 @@
 tr.asterveil-ranking-filtered {
   display: none !important;
 }
-html[data-asterveil-page="account-rankings"]
-  .ui.main.container:not([data-asterveil-table-size="compact"])
-  .ui.table.asterveil-ranking-table {
+.ui.main.container:not([data-asterveil-table-size="compact"]) .ui.table.asterveil-ranking-table {
   table-layout: fixed !important;
   width: max(100%, var(--av-ranking-width)) !important;
 }
-html[data-asterveil-page="account-rankings"]
-  .ui.main.container
-  .ui.table.asterveil-ranking-table
-  tr[id^="title-"]
-  > td {
+.ui.main.container .ui.table.asterveil-ranking-table tr[id^="title-"] > td {
   white-space: normal;
   overflow-wrap: anywhere;
 }
-html[data-asterveil-page="account-rankings"]
-  .ui.main.container[data-asterveil-table-size="compact"]
-  .asterveil-ranking-table
-  col {
+.ui.main.container[data-asterveil-table-size="compact"] .asterveil-ranking-table col {
   width: auto !important;
 }
 @media print {
@@ -101,50 +92,23 @@ html[data-asterveil-page="account-rankings"]
    Every original row stays in the document, browser find, and native export. */
 @supports (content-visibility: auto) {
   @media screen {
-    html[data-asterveil-page="account-rankings"]
-      .ui.main.container
-      .padding
-      > .ui.table.asterveil-ranking-table,
-    html[data-asterveil-page="account-rankings"]
-      .ui.main.container
-      .padding
-      > .ui.table.asterveil-ranking-table
-      > tbody {
+    .ui.main.container .padding > .ui.table.asterveil-ranking-table,
+    .ui.main.container .padding > .ui.table.asterveil-ranking-table > tbody {
       display: block;
     }
-    html[data-asterveil-page="account-rankings"]
-      .ui.main.container
-      .padding
-      > .ui.table.asterveil-ranking-table
-      > colgroup {
+    .ui.main.container .padding > .ui.table.asterveil-ranking-table > colgroup {
       display: none;
     }
-    html[data-asterveil-page="account-rankings"]
-      .ui.main.container
-      .padding
-      > .ui.table.asterveil-ranking-table
-      > tbody
-      > tr {
+    .ui.main.container .padding > .ui.table.asterveil-ranking-table > tbody > tr {
       display: grid;
       grid-template-columns: 64px 200px repeat(var(--av-ranking-other-columns), minmax(0, 1fr));
     }
-    html[data-asterveil-page="account-rankings"]
-      .ui.main.container
-      .padding
-      > .ui.table.asterveil-ranking-table
-      > tbody
-      > tr[id^="line-"] {
+    .ui.main.container .padding > .ui.table.asterveil-ranking-table > tbody > tr[id^="line-"] {
       content-visibility: auto;
       contain-intrinsic-block-size: auto 52px;
       min-height: 52px;
     }
-    html[data-asterveil-page="account-rankings"]
-      .ui.main.container
-      .padding
-      > .ui.table.asterveil-ranking-table
-      > tbody
-      > tr
-      > td:nth-child(n) {
+    .ui.main.container .padding > .ui.table.asterveil-ranking-table > tbody > tr > td:nth-child(n) {
       display: flex !important;
       align-items: center;
       justify-content: center;
@@ -154,8 +118,7 @@ html[data-asterveil-page="account-rankings"]
       white-space: normal;
       overflow-wrap: anywhere;
     }
-    html[data-asterveil-page="account-rankings"]
-      .ui.main.container
+    .ui.main.container
       .padding
       > .ui.table.asterveil-ranking-table
       > tbody
@@ -165,8 +128,7 @@ html[data-asterveil-page="account-rankings"]
       padding: 0 !important;
       width: 100%;
     }
-    html[data-asterveil-page="account-rankings"]
-      .ui.main.container[data-asterveil-table-size="compact"]
+    .ui.main.container[data-asterveil-table-size="compact"]
       .padding
       > .ui.table.asterveil-ranking-table
       > tbody
@@ -176,8 +138,7 @@ html[data-asterveil-page="account-rankings"]
           minmax(0, 1fr)
         );
     }
-    html[data-asterveil-page="account-rankings"]
-      .ui.main.container[data-asterveil-table-size="compact"]
+    .ui.main.container[data-asterveil-table-size="compact"]
       .padding
       > .ui.table.asterveil-ranking-table
       > tbody
@@ -185,8 +146,7 @@ html[data-asterveil-page="account-rankings"]
       contain-intrinsic-block-size: auto 36px;
       min-height: 36px;
     }
-    html[data-asterveil-page="account-rankings"]
-      .ui.main.container[data-asterveil-table-size="compact"]
+    .ui.main.container[data-asterveil-table-size="compact"]
       .padding
       > .ui.table.asterveil-ranking-table
       > tbody

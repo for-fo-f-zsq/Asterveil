@@ -1,8 +1,11 @@
 import type { Scope } from '../core/scope';
+import { useInlineStyle } from './inline-style';
+import css from './vjudge-accounts.css?inline';
 
 export function enhanceVjudgeAccounts(scope: Scope): void {
   const form = document.querySelector<HTMLFormElement>('#bind-form');
   if (!form) return;
+  useInlineStyle(scope, 'vjudge-accounts', css);
   const set = (element: Element, name: string, value: string) => {
     const previous = element.getAttribute(name);
     element.setAttribute(name, value);

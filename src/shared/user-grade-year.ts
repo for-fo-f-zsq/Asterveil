@@ -1,7 +1,16 @@
 import type { UserGrade } from './user-name-palette';
 
-export const userGradeAcademicYear = 2026;
 export const firstUserGradeAcademicYear = 2025;
+
+/** Academic years switch on September 1 in the local time zone. */
+export function currentUserGradeAcademicYear(now: Date = new Date()): number {
+  return now.getMonth() >= 8 ? now.getFullYear() : now.getFullYear() - 1;
+}
+
+export const userGradeAcademicYear = Math.max(
+  firstUserGradeAcademicYear,
+  currentUserGradeAcademicYear(),
+);
 const progression: readonly UserGrade[] = [
   'x4',
   'x5',
@@ -55,6 +64,13 @@ export function graduateYearUserGrade(value: unknown): UserGrade {
     return 'uk';
   const index = userGradeAcademicYear + 9 - year;
   return index < 0 ? 'uk' : (progression[Math.min(index, progression.length - 1)] ?? 'uk');
+}
+
+/** High-school graduation year for an enrolled cohort grade; special statuses have none. */
+export function userGradeGraduateYear(grade: UserGrade): number | undefined {
+  const index = progression.indexOf(grade);
+  if (index < 0 || index >= progression.length - 1) return undefined;
+  return userGradeAcademicYear + 9 - index;
 }
 
 export function schoolClassUserGrade(value: string): UserGrade {

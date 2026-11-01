@@ -1,0 +1,293 @@
+/* biome-ignore-all lint/complexity/noImportantStyles: the site paints some
+   surfaces with !important (pushable gray, loader ring), so the theme has to
+   answer in kind where it owns the same property. */
+/* Modern polish layer: page gradient, glass overlays and short motion cues.
+   Loaded after theme.css, so everything here restyles surfaces the component
+   sheet already owns — no new geometry, no page selectors, no colour tokens. */
+
+/* -------------------------------------------------------------- animation */
+
+@keyframes av-flow {
+  to {
+    background-position: 200% 0;
+  }
+}
+
+/* Opacity only: the main container holds the site's `position: fixed` drawer
+   button, and any transform — even the identity matrix an animation leaves
+   behind — would turn the container into that button's containing block. */
+@keyframes av-fade {
+  from {
+    opacity: 0;
+  }
+}
+
+/* ----------------------------------------------------------- page canvas */
+
+/* The canvas carries the page background itself, painted on the root so the
+   cards above it can frost what is behind them. */
+
+html[data-asterveil-appearance="polished"] {
+  background-color: var(--av-canvas);
+
+  & body,
+  & body > .pusher {
+    background-color: transparent !important;
+  }
+}
+
+/* The page background is one very light gradient and nothing else: a faint
+   accent wash from the top-left corner that is the canvas again by mid-page.
+   Kept static on purpose — a moving background forces every frosted pane above
+   it to re-sample each frame, and at this lightness the motion was never
+   visible enough to be worth that. */
+html[data-asterveil-appearance="polished"]:not([data-asterveil-background]) {
+  background-image: linear-gradient(
+    160deg,
+    color-mix(in srgb, var(--av-accent) 3%, var(--av-canvas)) 0%,
+    var(--av-canvas) 55%
+  );
+  background-attachment: fixed;
+  background-repeat: no-repeat;
+}
+
+html[data-asterveil-appearance="polished"]:not(
+  [data-asterveil-background]
+)[data-asterveil-scheme="dark"] {
+  background-image: linear-gradient(
+    160deg,
+    color-mix(in srgb, var(--av-accent) 5%, var(--av-canvas)) 0%,
+    var(--av-canvas) 58%
+  );
+}
+/* ----------------------------------------------------------------- glass */
+
+/* Every raised surface is a sheet of frosted glass: the paper colour at a
+   fraction of its alpha over a backdrop blur, so the ambient light — or the
+   user's own background image — reads through. A pane inside another pane is
+   more opaque, since two stacked sheets would wash the text out. */
+@supports (backdrop-filter: blur(8px)) {
+  html[data-asterveil-appearance="polished"] {
+    /* Fills turn to glass here and only here: every surface in theme.css reads
+       these two instead of the palette entry, so one pair of values frosts the
+       whole site — table headers, attached segments, panels and menus alike —
+       without repeating a rule per component. */
+    --av-fill-paper: color-mix(in srgb, var(--av-paper) 52%, transparent);
+    --av-fill-surface: color-mix(in srgb, var(--av-surface) 42%, transparent);
+
+    /* Glass is a flat frosted sheet: one translucent fill and a backdrop blur.
+       No gradient on any frame — the only gradient in the theme is the page
+       background behind everything. */
+    --av-glass-fill: color-mix(in srgb, var(--av-paper) 64%, transparent);
+    --av-glass-fill-inner: color-mix(in srgb, var(--av-paper) 46%, transparent);
+    /* Floating chrome sits closer to the viewer than a card, so it carries a
+       little more paper — and in the dark scheme more still, since a low alpha
+       there lets the bright page behind show as a grey haze. */
+    --av-glass-chrome: color-mix(in srgb, var(--av-paper) 78%, transparent);
+    --av-glass-sidebar: color-mix(in srgb, var(--av-paper) 82%, transparent);
+    --av-glass-edge: inset 0 1px 0 color-mix(in srgb, #fff 62%, transparent);
+    --av-glass-shadow: 0 18px 44px -30px rgb(17 34 56 / 42%);
+    --av-glass-line: color-mix(in srgb, var(--av-border) 64%, transparent);
+    /* Frost, not just alpha: a wide blur plus a strong saturation lift is what
+       makes the pane read as ground glass instead of a see-through sheet. */
+    --av-glass-blur: blur(22px) saturate(1.75);
+
+    &
+      :is(
+        .ui.segment:not(.center.aligned.vertical),
+        .ui.card,
+        .ui.cards > .card,
+        .ui.modal,
+        .ui.popup,
+        .ui.styled.accordion,
+        .ui.top.attached.block.header,
+        .ui.attached.header,
+        .ui.pagination.menu
+      ),
+    & .ui.main.container .padding > .ui.table {
+      border-color: var(--av-glass-line);
+      background-color: var(--av-glass-fill);
+      box-shadow: var(--av-glass-edge), var(--av-glass-shadow);
+      backdrop-filter: var(--av-glass-blur);
+    }
+
+    /* A pane inside another pane loses most of its fill so the stack reads as
+       one slab of glass with a divider, not as two tinted sheets. */
+    &
+      :is(.ui.segment:not(.center.aligned.vertical), .ui.card, .ui.styled.accordion)
+      :is(.ui.segment:not(.center.aligned.vertical), .ui.card, .ui.styled.accordion) {
+      border-color: var(--av-glass-line);
+      background-color: var(--av-glass-fill-inner);
+      backdrop-filter: blur(18px) saturate(1.5);
+    }
+
+    /* Rows and headers inside a slab stay translucent too, otherwise the
+       table punches an opaque rectangle through the glass. */
+    & .ui.main.container .ui.table > :is(thead, tfoot) > tr > :is(th, td) {
+      background-color: color-mix(in srgb, var(--av-paper) 40%, transparent);
+    }
+
+    & .ui.main.container > .padding > .ui.table:not(:has(thead)) > tbody > tr:first-child > td {
+      background-color: color-mix(in srgb, var(--av-paper) 40%, transparent);
+    }
+
+    /* A status row keeps its semantic tint but stops being the one opaque band
+       inside the slab: the tint is the row's own text colour at a low alpha, so
+       one rule covers every state in both schemes. */
+    & .ui.main.container .ui.table > tbody > tr:is(.positive, .negative, .warning, .error) {
+      background-color: color-mix(in srgb, currentcolor 12%, transparent) !important;
+    }
+
+    & .ui.fixed.borderless.menu {
+      border-color: var(--av-glass-line);
+      background-color: var(--av-glass-chrome);
+      box-shadow:
+        inset 0 1px 0 color-mix(in srgb, #fff 55%, transparent),
+        0 10px 30px -24px rgb(17 34 56 / 38%);
+      backdrop-filter: blur(26px) saturate(1.8);
+    }
+
+    & .ui.sidebar.vertical.menu {
+      border-color: var(--av-glass-line);
+      background-color: var(--av-glass-sidebar);
+      backdrop-filter: blur(28px) saturate(1.7);
+    }
+
+    & :is(.ui.fixed.menu .dropdown > .menu, .ui.dropdown > .menu) {
+      border-color: var(--av-glass-line);
+      background-color: color-mix(in srgb, var(--av-paper) 86%, transparent);
+      backdrop-filter: blur(20px) saturate(1.6);
+    }
+
+    & .ui.dimmer {
+      backdrop-filter: blur(6px) saturate(1.1);
+    }
+  }
+}
+/* ------------------------------------------------------- gradient details */
+
+@media screen and (prefers-reduced-motion: no-preference) {
+  html[data-asterveil-appearance="polished"] {
+    & .ui.fixed.borderless.menu > .container > .header.item {
+      background: linear-gradient(
+        100deg,
+        var(--av-accent),
+        color-mix(in srgb, var(--av-accent) 58%, var(--av-heading)) 48%,
+        var(--av-accent)
+      );
+      background-size: 220% 100%;
+      background-clip: text;
+      color: transparent;
+      animation: av-flow 10s linear infinite;
+    }
+
+    & .ui.fixed.borderless.menu::after {
+      content: "";
+      position: absolute;
+      inset: auto 0 -1px;
+      height: 1px;
+      background:
+        linear-gradient(90deg, transparent, var(--av-accent), transparent) 0 0 / 200% 100%;
+      opacity: 0.45;
+      animation: av-flow 14s linear infinite;
+    }
+
+    /* One short entrance cue per navigation; the guard already hides the
+       first paint, so this reads as the page settling rather than loading. */
+    & .ui.main.container {
+      animation: av-fade 260ms cubic-bezier(0.16, 1, 0.3, 1) both;
+    }
+
+    /* The progress fill carries a slow sheen; it is the only place where a
+       moving gradient sits on top of content, and the text stays on the bar. */
+    & .ui.progress:not(.success, .warning, .error, .active) > .bar {
+      background-image: linear-gradient(
+        90deg,
+        color-mix(in srgb, var(--av-accent) 72%, var(--av-paper)),
+        var(--av-accent) 42%,
+        color-mix(in srgb, var(--av-accent) 72%, var(--av-paper))
+      );
+      background-size: 220% 100%;
+      animation: av-flow 7s linear infinite;
+    }
+  }
+}
+
+/* The navigation gains depth only once the page is scrolled. */
+@supports (animation-timeline: scroll()) {
+  @keyframes av-nav-lift {
+    to {
+      box-shadow: 0 12px 32px -20px rgb(23 43 73 / 55%);
+    }
+  }
+
+  html[data-asterveil-appearance="polished"] .ui.fixed.borderless.menu {
+    animation: av-nav-lift linear both;
+    animation-timeline: scroll(root block);
+    animation-range: 0 72px;
+  }
+}
+
+/* -------------------------------------------------------------- feedback */
+
+@media screen and (prefers-reduced-motion: no-preference) and (hover: hover) {
+  html[data-asterveil-appearance="polished"] {
+    & .ui.button:not(.disabled, :disabled) {
+      transition:
+        transform 160ms cubic-bezier(0.2, 0.8, 0.2, 1),
+        box-shadow 160ms ease,
+        background-color 160ms ease,
+        color 160ms ease;
+    }
+
+    & .ui.button:not(.disabled, :disabled):hover {
+      transform: translateY(-1px);
+    }
+
+    & .ui.button:not(.disabled, :disabled):active {
+      transform: translateY(0) scale(0.985);
+    }
+
+    & .ui.card {
+      transition:
+        transform 200ms cubic-bezier(0.2, 0.8, 0.2, 1),
+        box-shadow 200ms ease;
+    }
+
+    & .ui.card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 28px -18px rgb(23 43 73 / 45%);
+    }
+
+    & .ui.table > tbody > tr {
+      transition: background-color 160ms ease;
+    }
+  }
+}
+
+/* ---------------------------------------------------------------- loading */
+
+/* A conic sweep replaces the two-tone ring; the loader keeps the site's size
+   and its own rotation animation. */
+html[data-asterveil-appearance="polished"] {
+  & .ui.loader::before {
+    border: 2px solid color-mix(in srgb, var(--av-accent) 20%, transparent) !important;
+  }
+
+  & .ui.loader::after {
+    border: 0 !important;
+    border-radius: 50%;
+    background: conic-gradient(from 0turn, transparent 0 42%, var(--av-accent));
+    mask: radial-gradient(farthest-side, transparent calc(100% - 3px), #000 0);
+  }
+}
+
+@media print {
+  html[data-asterveil-appearance="polished"] {
+    background-image: none;
+  }
+
+  html[data-asterveil-appearance="polished"] .ui.loader::after {
+    display: none;
+  }
+}

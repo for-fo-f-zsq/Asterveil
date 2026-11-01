@@ -1,12 +1,1869 @@
-/* Cascade order: shared surfaces, page adapters, mode and specialized controls. */
-@import "./appearance.css";
-@import "./details.css";
-@import "./contest.css";
-@import "./problem-tools.css";
-@import "./account.css";
-@import "./forms.css";
-@import "./vjudge-accounts.css";
-@import "./dark.css";
-@import "./code-editor.css";
-@import "./chat.css";
-@import "./login.css";
+/* biome-ignore-all lint/style/noDescendingSpecificity: Component rules refine shared Semantic UI surfaces in source order. */
+/* biome-ignore-all lint/complexity/noImportantStyles: Semantic UI and the site inline styles require important overrides in a few adapted components. */
+/* Asterveil UI polish.
+
+   The site serves one stylesheet set for every route, so this sheet styles the
+   site's Semantic UI components instead of individual pages. Page structure is
+   expressed through the markup itself (`:has(thead)`, nested containers, links
+   to a record) rather than through a route name, so a page the extension has
+   never seen is still themed.
+
+   Order is the cascade: tokens, shell, surfaces, tables, forms, controls,
+   content, then the few exceptions that must outrank the site's inline styles. */
+
+/* ------------------------------------------------------------------ tokens */
+
+html[data-asterveil-appearance="polished"] {
+  --av-canvas: #f5f7fa;
+  --av-border: #e1e7ef;
+  --av-accent: #3b82c4;
+  --av-tint: #edf4fb;
+  /* Neutral control fill: deep enough that a button reads as a block on white,
+     over a background image and on a dark canvas alike. */
+  --av-chip: color-mix(in srgb, var(--av-accent) 22%, var(--av-paper));
+  /* Buttons read these two; a primary action just overrides them locally. */
+  --av-control-fill: var(--av-chip);
+  --av-control-text: var(--av-accent);
+  --av-surface: #f9fbfd;
+  /* Every fill that forms a surface reads one of these two, never the palette
+     entry directly: effects.css lowers their alpha where the backdrop can be
+     frosted and leaves them opaque everywhere else. */
+  --av-fill-paper: var(--av-paper);
+  --av-fill-surface: var(--av-surface);
+  --av-hover: #f5f9fd;
+  --av-heading: #34465a;
+  --av-icon: #68839e;
+  --av-focus: #7198c0;
+  --av-ring: #e7edf3;
+  --av-shadow: 0 3px 14px rgb(35 55 80 / 4%);
+  /* Shared geometry: controls, list surfaces and panels. */
+  --av-radius-control: 7px;
+  --av-radius-surface: 10px;
+  --av-radius-panel: 12px;
+  --av-cell-padding: 12px;
+  /* The fixed navigation overlays the top of the scrollport. */
+  --av-nav-height: 49px;
+}
+
+/* ------------------------------------------------------------------- shell */
+
+html[data-asterveil-appearance="polished"] {
+  & body,
+  & body > .pusher {
+    background-color: var(--av-canvas);
+  }
+
+  & .ui.fixed.borderless.menu {
+    border-color: var(--av-border);
+    box-shadow: 0 2px 10px rgb(35 55 80 / 5%);
+  }
+
+  & .ui.fixed.borderless.menu > .container > .header.item {
+    color: var(--av-accent);
+  }
+
+  & .ui.fixed.borderless.menu > .container > .item.active {
+    background-color: var(--av-tint);
+    color: var(--av-accent);
+    box-shadow: inset 0 -2px var(--av-accent);
+  }
+
+  & .ui.fixed.menu .dropdown > .menu {
+    border-color: var(--av-border);
+    border-radius: 0 0 var(--av-radius-surface) var(--av-radius-surface);
+    box-shadow: 0 8px 28px rgb(35 55 80 / 10%);
+  }
+
+  & .ui.sidebar.vertical.menu {
+    border-color: var(--av-border);
+    box-shadow: 2px 0 14px rgb(35 55 80 / 5%);
+  }
+
+  & .ui.sidebar .ui.styled.accordion {
+    box-shadow: none;
+    border-radius: 0;
+  }
+
+  & .ui.sidebar .ui.buttons > .ui.button.active {
+    background: var(--av-tint);
+    color: var(--av-accent);
+    box-shadow: inset 3px 0 var(--av-accent);
+  }
+
+  /* The site renders its outline inside the content column, then Semantic UI
+     moves the sidebar to the document body when it is toggled. Everything that
+     belongs to the outline is scoped to the sidebar itself so both placements
+     keep the same treatment. */
+  & .ui.sidebar .ui.styled.accordion .title {
+    border-color: var(--av-border);
+    color: var(--av-text);
+  }
+
+  & .ui.sidebar .ui.styled.accordion .title > .dropdown.icon {
+    color: var(--av-icon);
+    opacity: 1;
+  }
+
+  & .ui.sidebar .ui.styled.accordion .title:is(:hover, .active) {
+    background: var(--av-tint);
+    color: var(--av-accent);
+  }
+
+  /* The site's label boxes carry no border; drawing one as a box-shadow keeps
+     the exact height and width the site lays out. */
+  & .ui.sidebar .ui.label {
+    border-radius: var(--av-radius-control);
+    background: var(--av-paper);
+    box-shadow: inset 0 0 0 1px var(--av-border);
+    color: var(--av-muted);
+    font-weight: 500;
+  }
+
+  & .ui.sidebar .ui.label:is(:hover, :focus-visible) {
+    box-shadow: inset 0 0 0 1px var(--av-focus);
+    color: var(--av-accent);
+  }
+
+  & .ui.sidebar .ui.basic.button {
+    /* Semantic UI marks the basic button colours important. */
+    color: var(--av-text) !important;
+
+    &:is(:hover, :focus-visible) {
+      background-color: var(--av-tint) !important;
+      color: var(--av-accent) !important;
+    }
+  }
+
+  & .ui.sidebar > .item.side-button {
+    border-color: var(--av-border);
+    color: var(--av-muted);
+
+    &:is(:hover, :focus-visible) {
+      color: var(--av-accent);
+    }
+  }
+
+  & .ui.sidebar .ui.vertical.buttons {
+    overflow: hidden;
+    border-radius: var(--av-radius-control);
+    box-shadow: var(--av-shadow);
+  }
+
+  & .ui.sidebar .ui.vertical.buttons > .ui.button {
+    border-radius: 0;
+  }
+
+  & .ui.main.container {
+    color: var(--av-text);
+
+    & :is(h1, h2, h3, .ui.header) {
+      color: var(--av-heading);
+      line-height: 1.5;
+    }
+
+    /* Page titles sit directly inside the site's content padding, often with
+       inline badges or a compact menu on the same line. */
+    & > .padding > h1 {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+      color: var(--av-heading);
+      font-size: 28px;
+      line-height: 1.5;
+
+      & > .ui.header {
+        margin: 0;
+        line-height: 1;
+      }
+
+      & .ui.label {
+        border-radius: var(--av-radius-control);
+        font-weight: 500;
+        line-height: 1.4;
+      }
+
+      & .ui.blue.label {
+        background-color: var(--av-tint) !important;
+        color: var(--av-accent) !important;
+      }
+
+      & .ui.compact.menu {
+        border-color: var(--av-border);
+        border-radius: var(--av-radius-control);
+        box-shadow: var(--av-shadow);
+        font-size: 14px;
+        vertical-align: middle;
+      }
+
+      & .ui.dropdown > .menu {
+        border-color: var(--av-border);
+        border-radius: var(--av-radius-control);
+        box-shadow: var(--av-shadow);
+      }
+
+      & .ui.dropdown > .menu > .item:hover {
+        background: var(--av-tint);
+        color: var(--av-accent);
+      }
+    }
+
+    & > .padding > .ui.label {
+      background: var(--av-paper);
+      color: var(--av-muted);
+      border: 1px solid var(--av-border);
+      border-radius: var(--av-radius-control);
+      font-weight: 500;
+      font-variant-numeric: tabular-nums;
+    }
+
+    & h2 {
+      font-size: 21px;
+    }
+
+    & a:not(.ui.button, [style*="color"]) {
+      color: var(--av-accent);
+    }
+  }
+}
+
+@media (hover: hover) {
+  html[data-asterveil-appearance="polished"] {
+    & .ui.fixed.borderless.menu > .container > a.item:hover {
+      background-color: var(--av-tint);
+      color: var(--av-accent);
+    }
+
+    & .ui.fixed.menu .dropdown > .menu > .item:hover {
+      background: var(--av-tint) !important;
+      color: var(--av-accent) !important;
+    }
+  }
+}
+
+/* ---------------------------------------------------------------- surfaces */
+
+html[data-asterveil-appearance="polished"] {
+  & .ui.main.container {
+    & .ui.top.attached.block.header {
+      background: var(--av-fill-surface);
+      color: var(--av-heading);
+      border-color: var(--av-border);
+      border-radius: var(--av-radius-surface) var(--av-radius-surface) 0 0;
+    }
+
+    & .ui.top.attached.block.header > .icon {
+      color: var(--av-icon);
+    }
+
+    & .ui.bottom.attached.segment {
+      border-color: var(--av-border);
+      border-radius: 0 0 var(--av-radius-surface) var(--av-radius-surface);
+      box-shadow: var(--av-shadow);
+    }
+
+    & .ui.secondary.pointing.menu {
+      border-color: var(--av-border);
+    }
+
+    & .ui.secondary.pointing.menu .active.item {
+      color: var(--av-accent);
+      border-color: var(--av-accent);
+    }
+
+    & .ui.pagination.menu {
+      border-color: var(--av-border);
+      border-radius: var(--av-radius-surface);
+      background: transparent;
+      box-shadow: var(--av-shadow);
+      max-width: 100%;
+      overflow-x: auto;
+
+      & .active.item {
+        background: var(--av-tint);
+        color: var(--av-accent);
+        font-weight: 600;
+      }
+    }
+
+    & .ui.message {
+      border-radius: var(--av-radius-surface);
+      overflow-wrap: anywhere;
+    }
+
+    & .ui.card {
+      border: 1px solid var(--av-border);
+      border-radius: var(--av-radius-panel);
+      box-shadow: var(--av-shadow);
+      overflow: hidden;
+    }
+
+    & .ui.card > .content {
+      padding: 18px;
+    }
+
+    & .ui.card > .image {
+      background: var(--av-fill-surface);
+    }
+
+    & .ui.card > .extra {
+      background: var(--av-fill-surface);
+    }
+
+    & .ui.info.message {
+      padding: 14px 16px;
+      margin: 0;
+      border: 1px solid var(--av-border);
+      border-radius: var(--av-radius-control);
+      background: var(--av-fill-surface);
+      color: var(--av-muted);
+      box-shadow: none;
+    }
+
+    & .ui.progress:not(.success, .error, .warning, .active) > .bar {
+      background-color: var(--av-accent);
+    }
+  }
+
+  /* The profile avatar keeps its square placeholder but not the site's offset. */
+  & .ui.main.container #avatar_container::before {
+    padding-top: 65%;
+  }
+
+  & .ui.main.container .ui.card > .image > img.photo {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    margin-top: 0 !important;
+  }
+}
+
+/* ------------------------------------------------------------------ tables */
+
+html[data-asterveil-appearance="polished"] {
+  /* A standalone list table becomes a card. Tables nested inside another
+     surface keep that surface and only share the intrinsic styling below. */
+  & .ui.main.container .padding > .ui.table {
+    background: var(--av-fill-paper);
+    border: 1px solid var(--av-border);
+    border-collapse: separate;
+    border-spacing: 0;
+    border-radius: var(--av-radius-surface);
+    box-shadow: var(--av-shadow);
+
+    & > thead > tr > th {
+      padding: 14px var(--av-cell-padding);
+      background: var(--av-fill-surface);
+      color: var(--av-heading);
+      border-bottom: 1px solid var(--av-border);
+      line-height: 1.5;
+    }
+
+    & > tbody > tr > td {
+      padding: var(--av-cell-padding);
+      border-color: var(--av-tint);
+      line-height: 1.6;
+    }
+
+    & > thead > tr > th:first-child {
+      border-top-left-radius: var(--av-radius-surface);
+    }
+
+    & > thead > tr > th:last-child {
+      border-top-right-radius: var(--av-radius-surface);
+    }
+
+    & > tbody > tr:last-child > td {
+      border-bottom: 0;
+    }
+
+    & > tbody > tr:last-child > td:first-child {
+      border-bottom-left-radius: var(--av-radius-surface);
+    }
+
+    & > tbody > tr:last-child > td:last-child {
+      border-bottom-right-radius: var(--av-radius-surface);
+    }
+  }
+
+  /* Every table shares the same headings, separators and numeric alignment,
+     whatever surface it sits on. Density modifiers stay with the site.
+     The table itself is see-through: its surface is the pane it sits on. */
+  & .ui.main.container .ui.table {
+    background: transparent;
+    color: var(--av-text);
+
+    & > thead > tr > :is(th, td),
+    & > tfoot > tr > :is(th, td) {
+      background: var(--av-fill-surface);
+      color: var(--av-heading);
+      border-color: var(--av-border);
+    }
+
+    & > tbody > tr > :is(td, th) {
+      border-color: var(--av-tint);
+    }
+
+    /* Data tables carry numeric columns; tabular figures keep them aligned. */
+    &.ui.data.table > tbody > tr > td {
+      border-left-color: transparent;
+      font-variant-numeric: tabular-nums;
+    }
+  }
+
+  /* Legacy list tables render the first body row as a sticky header instead of
+     a thead. The site already positions it; only the paint belongs here. */
+  & .ui.main.container > .padding > .ui.table:not(:has(thead)) > tbody > tr:first-child {
+    z-index: 2 !important;
+
+    & > td {
+      padding: 14px var(--av-cell-padding);
+      background: var(--av-fill-surface);
+      color: var(--av-heading);
+      border-bottom: 1px solid var(--av-border);
+    }
+
+    & > td:first-child {
+      border-top-left-radius: var(--av-radius-surface);
+    }
+
+    & > td:last-child {
+      border-top-right-radius: var(--av-radius-surface);
+    }
+  }
+
+  /* Long record titles stay inside their column instead of widening the grid. */
+  & .ui.main.container .ui.table > tbody > tr > td > a[href^="/problem/"] {
+    display: inline-block;
+    max-width: 160px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    vertical-align: bottom;
+    white-space: nowrap;
+  }
+
+  /* Contest tables are the only selectable celled tables with breathing room;
+     compact variants keep the site's density. */
+  & .ui.main.container .ui.selectable.celled.table:not(.compact) {
+    border: 1px solid var(--av-border);
+    border-collapse: separate;
+    border-spacing: 0;
+    border-radius: var(--av-radius-surface);
+    box-shadow: var(--av-shadow);
+    overflow: hidden;
+
+    & > thead > tr > th {
+      padding: 15px 16px;
+      background: var(--av-fill-surface);
+      color: var(--av-heading);
+      border-color: var(--av-border);
+      border-left: 0;
+    }
+
+    & > tbody > tr > td {
+      padding: 16px;
+      border-color: var(--av-tint);
+      border-left: 0;
+      line-height: 1.6;
+    }
+  }
+
+  & .ui.main.container .ui.definition.table {
+    border-color: var(--av-border);
+    border-radius: var(--av-radius-control);
+    line-height: 1.6;
+
+    & > thead > tr > th {
+      background: var(--av-fill-surface);
+      border-color: var(--av-border);
+    }
+  }
+}
+
+@media (hover: hover) {
+  html[data-asterveil-appearance="polished"] {
+    &
+      .ui.main.container
+      .ui.table
+      > tbody
+      > tr:not([data-type="week"], .active, .positive, .negative, .warning, .error, .disabled):hover
+      > :is(td, th) {
+      background-color: color-mix(in srgb, var(--av-accent) 7%, transparent);
+    }
+  }
+}
+
+/* ------------------------------------------------------------------- forms */
+
+html[data-asterveil-appearance="polished"] {
+  & .ui.main.container {
+    /* A data-entry form lays its fields out; the site owns the frame — most
+       forms are the only thing in `.padding`, so a panel here would draw a box
+       the site never draws. Controls are skinned further down. */
+    & .ui.form:not(:where(.ui.inline.form, .ui.mini.form)) {
+      & .field {
+        margin-bottom: 18px;
+      }
+
+      & > .field > label,
+      & .fields > .field > label {
+        color: var(--av-heading);
+        margin-bottom: 8px;
+      }
+
+      & .fields:last-child {
+        margin-bottom: 0;
+      }
+
+      & select {
+        min-height: 40px;
+      }
+
+      & textarea {
+        padding: 12px;
+        min-height: 92px;
+        background: var(--av-paper);
+        line-height: 1.7;
+        resize: vertical;
+      }
+
+      & .ui.input > input {
+        min-height: 44px;
+      }
+
+      & .ui.input > .icon {
+        color: var(--av-icon);
+        opacity: 1;
+      }
+
+      /* A native submit button carries the primary action of its form: it only
+         overrides the neutral control's fill and text, so no selector has to
+         out-specify the general button rule. */
+      & button[type="submit"] {
+        --av-control-fill: var(--av-solid, var(--av-accent, #3b82c4));
+        --av-control-text: var(--av-on-accent);
+        min-height: 40px;
+        border-radius: var(--av-radius-control);
+      }
+
+      & button[type="submit"]:hover {
+        --av-control-fill: color-mix(in srgb, var(--av-solid, var(--av-accent)) 94%, #000);
+      }
+    }
+
+    /* Text fields and dropdowns share one control surface in every form. */
+    &
+      .ui.form
+      :is(
+        input:not([type="checkbox"], [type="radio"], [type="submit"], [type="file"]),
+        textarea,
+        select
+      ),
+    & .ui.selection.dropdown {
+      background: var(--av-surface);
+      border-color: var(--av-border);
+      border-radius: var(--av-radius-control);
+      color: var(--av-text);
+    }
+
+    & .ui.form :is(input, textarea, select):focus,
+    & .ui.selection.dropdown.active,
+    & .ui.selection.dropdown:focus {
+      background: var(--av-paper);
+      border-color: var(--av-focus);
+      box-shadow: 0 0 0 3px var(--av-ring);
+    }
+
+    & .ui.input > input {
+      border-color: var(--av-border);
+      box-shadow: 0 1px 3px rgb(35 55 80 / 3%);
+    }
+
+    & .ui.input > input:focus {
+      border-color: var(--av-focus);
+      box-shadow: 0 0 0 3px var(--av-ring);
+    }
+
+    /* Sign-in: the grid is the page body, the form supplies its own panel. */
+    & > .ui.grid:has(#login) {
+      margin: 0;
+      padding: clamp(16px, 7vh, 72px) 0 24px;
+    }
+
+    & .ui.image.header {
+      color: var(--av-heading);
+      font-size: 28px;
+      margin-bottom: 22px;
+    }
+
+    & #login {
+      min-height: 46px;
+      border-radius: var(--av-radius-control);
+      background: var(--av-solid);
+      color: var(--av-on-accent);
+    }
+
+    & #login:hover {
+      background: color-mix(in srgb, var(--av-solid) 94%, #000);
+    }
+
+    & #login:focus-visible {
+      outline: 2px solid var(--av-accent);
+      outline-offset: 3px;
+    }
+
+    & .ui.message:empty {
+      display: none;
+    }
+
+    & > .ui.error.message {
+      max-width: 422px;
+      margin: 0 auto 20px;
+    }
+  }
+}
+
+@media (max-width: 767px) {
+  html[data-asterveil-appearance="polished"] {
+    & .ui.main.container .ui.form:not(:where(.ui.inline.form, .ui.mini.form)) {
+      padding: 14px;
+    }
+
+    & .ui.main.container > .ui.grid:has(#login) > .row > .column {
+      padding-left: 0;
+      padding-right: 0;
+    }
+
+    & .ui.fixed.menu > .ui.container {
+      overflow-x: auto;
+    }
+
+    & .ui.fixed.menu .item {
+      flex-shrink: 0;
+    }
+  }
+}
+
+/* ---------------------------------------------------------------- controls */
+
+html[data-asterveil-appearance="polished"] {
+  & :is(.ui.main.container, .ui.sidebar) {
+    /* Action groups own their corners; standalone buttons take the control radius. */
+    & .ui.button:not(.ui.buttons > .ui.button, .ui.labeled.button > .ui.button) {
+      border-radius: var(--av-radius-control);
+    }
+
+    /* Neutral buttons read as actions on their surface; status colors stay. */
+    &
+      .ui.button:not(
+        .red,
+        .orange,
+        .yellow,
+        .green,
+        .teal,
+        .blue,
+        .violet,
+        .purple,
+        .pink,
+        .brown,
+        .grey,
+        .black,
+        .positive,
+        .negative,
+        .primary,
+        .secondary
+      ) {
+      background: var(--av-control-fill);
+      color: var(--av-control-text);
+    }
+
+    & .ui.form .ui.blue.button {
+      background-color: var(--av-solid, var(--av-accent, #3b82c4));
+      color: var(--av-on-accent);
+    }
+
+    /* Wide labeled buttons share one control height; mini variants keep the
+       site's own compact size so toolbars stay on a single baseline. */
+    & .ui.labeled.button:not(.mini, .tiny, .small) > .ui.button {
+      min-height: 38px;
+      border-radius: var(--av-radius-control) 0 0 var(--av-radius-control);
+    }
+
+    & .ui.labeled.button:not(.mini, .tiny, .small) > .ui.label {
+      border-color: var(--av-border);
+      border-radius: 0 var(--av-radius-control) var(--av-radius-control) 0;
+    }
+
+    & .ui.labeled.mini.button > .ui.button,
+    & .ui.labeled.tiny.button > .ui.button,
+    & .ui.labeled.small.button > .ui.button {
+      border-radius: var(--av-radius-control) 0 0 var(--av-radius-control);
+    }
+
+    & .ui.labeled.mini.button > .ui.label,
+    & .ui.labeled.tiny.button > .ui.label,
+    & .ui.labeled.small.button > .ui.label {
+      border-color: var(--av-border);
+      border-radius: 0 var(--av-radius-control) var(--av-radius-control) 0;
+    }
+
+    /* Adjoining action buttons keep one frame and the group's own corners.
+       No border on the group: it would shrink the content box by 2px and the
+       buttons inside would no longer sit where the site puts them. */
+    & .ui.buttons {
+      max-width: 100%;
+      flex-wrap: wrap;
+      border-radius: var(--av-radius-control);
+      box-shadow: var(--av-shadow);
+      /* Native tooltip pseudo-elements extend beyond the group. */
+      overflow: visible;
+
+      & > .ui.button {
+        border-radius: 0;
+        box-shadow: none;
+
+        &:nth-child(1 of .ui.button:not([hidden], .hidden)) {
+          border-top-left-radius: var(--av-radius-control);
+          border-bottom-left-radius: var(--av-radius-control);
+        }
+
+        &:nth-last-child(1 of .ui.button:not([hidden], .hidden)) {
+          border-top-right-radius: var(--av-radius-control);
+          border-bottom-right-radius: var(--av-radius-control);
+        }
+      }
+
+      /* A vertical group stacks its buttons: the group's corners are the top
+         of the first row and the bottom of the last one, not its left/right. */
+      &.vertical > .ui.button {
+        &:nth-child(1 of .ui.button:not([hidden], .hidden)) {
+          border-top-left-radius: var(--av-radius-control);
+          border-top-right-radius: var(--av-radius-control);
+          border-bottom-left-radius: 0;
+          border-bottom-right-radius: 0;
+        }
+
+        &:nth-last-child(1 of .ui.button:not([hidden], .hidden)) {
+          border-top-left-radius: 0;
+          border-top-right-radius: 0;
+          border-bottom-left-radius: var(--av-radius-control);
+          border-bottom-right-radius: var(--av-radius-control);
+        }
+      }
+    }
+
+    /* The site's own comment button keeps the primary action color. */
+    & .ui.button.set-comment {
+      background-color: var(--av-solid, var(--av-accent, #3b82c4));
+      color: var(--av-on-accent);
+    }
+
+    /* Native tooltips appear after a short delay and on keyboard focus. */
+    & .ui.buttons > .ui.button[data-tooltip] {
+      &::before,
+      &::after {
+        transition:
+          opacity 120ms ease,
+          transform 120ms ease,
+          visibility 0s;
+      }
+
+      &::before {
+        background: var(--av-paper);
+        box-shadow: 1px 1px 0 var(--av-border);
+      }
+
+      &::after {
+        box-sizing: border-box;
+        left: calc(50% + var(--av-tooltip-offset, 0px));
+        width: max-content;
+        max-width: min(360px, calc(100vw - 32px));
+        padding: 10px 14px;
+        border: 1px solid var(--av-border);
+        border-radius: var(--av-radius-surface);
+        background: var(--av-paper);
+        color: var(--av-text);
+        box-shadow: 0 6px 24px #10243d1f;
+        font-family: "Segoe UI", "Microsoft YaHei", sans-serif;
+        font-size: 13px;
+        font-weight: 400;
+        line-height: 1.7;
+        white-space: normal;
+        overflow-wrap: anywhere;
+      }
+
+      &:is(:hover, :focus-visible)::before,
+      &:is(:hover, :focus-visible)::after {
+        transition-delay: 250ms;
+      }
+
+      &:focus-visible {
+        outline: 2px solid var(--av-focus);
+        outline-offset: 2px;
+      }
+
+      &:focus-visible::before {
+        opacity: 1;
+        transform: rotate(45deg) scale(1) !important;
+      }
+
+      &:focus-visible::after {
+        transform: translateX(-50%) scale(1) !important;
+      }
+
+      &:focus-visible::before,
+      &:focus-visible::after {
+        visibility: visible;
+      }
+    }
+  }
+}
+
+/* ----------------------------------------------------------------- content */
+
+html[data-asterveil-appearance="polished"] {
+  & .ui.main.container {
+    & .ui.bottom.attached.segment {
+      line-height: 1.75;
+      overflow-wrap: anywhere;
+    }
+
+    & > .padding > h2 {
+      margin: 4px 0 20px;
+    }
+
+    & > .ui.center.aligned.grid {
+      margin-bottom: 22px;
+
+      & h1 {
+        color: var(--av-heading);
+        line-height: 1.5;
+      }
+
+      & .ui.label {
+        background: var(--av-paper);
+        color: var(--av-muted);
+        border: 1px solid var(--av-border);
+        border-radius: var(--av-radius-control);
+        font-weight: 500;
+      }
+    }
+
+    & h1.ui.header > a {
+      color: var(--av-heading);
+    }
+
+    & #show_tag_title_div {
+      background: var(--av-fill-surface);
+      border-color: var(--av-border);
+      border-radius: var(--av-radius-control) var(--av-radius-control) 0 0;
+    }
+
+    & #languages-menu {
+      background: var(--av-fill-paper);
+      border-color: var(--av-border);
+      border-radius: var(--av-radius-control);
+      box-shadow: none;
+    }
+
+    & #languages-menu .active.item {
+      background: var(--av-tint);
+      border-color: var(--av-accent);
+      color: var(--av-accent);
+    }
+
+    & #submit_code {
+      scroll-margin-top: 72px;
+    }
+
+    & #timer-progress {
+      margin-top: 12px;
+      margin-bottom: 28px;
+      border-radius: var(--av-radius-control);
+      background: var(--av-tint);
+    }
+
+    /* Grading tools: one panel, nested review segments stay flat. */
+    & > .ui.grid > .row.ui.segment {
+      padding-top: 20px;
+      padding-bottom: 20px;
+      border-color: var(--av-border);
+      border-radius: var(--av-radius-panel);
+      box-shadow: var(--av-shadow);
+    }
+
+    & .row.ui.segment .column > .row.ui.segment {
+      background: var(--av-fill-surface);
+      border-color: var(--av-border);
+      border-radius: var(--av-radius-control);
+      box-shadow: none;
+      line-height: 1.7;
+    }
+
+    & .ui.three.item.menu {
+      border-color: var(--av-border);
+      border-radius: var(--av-radius-control);
+      box-shadow: var(--av-shadow);
+      overflow: hidden;
+    }
+
+    & .ui.three.item.menu > .active.item {
+      background: var(--av-tint);
+      color: var(--av-accent);
+      box-shadow: inset 0 -2px var(--av-accent);
+    }
+
+    & .ten.wide.column > img {
+      border-radius: var(--av-radius-control);
+    }
+
+    & #teacher_mode {
+      padding: 10px 12px;
+      border: 1px solid var(--av-border);
+      border-radius: var(--av-radius-control);
+      background: var(--av-fill-paper);
+      box-shadow: var(--av-shadow);
+    }
+
+    /* Charts keep their own palette; only the frame is themed. */
+    &
+      .padding
+      > :is(
+        #score-distribution-chart,
+        #score-distribution-chart-pre,
+        #score-distribution-chart-suf
+      ) {
+      border-radius: var(--av-radius-panel);
+      background: var(--av-fill-paper);
+      box-shadow:
+        var(--av-shadow),
+        0 0 0 1px var(--av-border);
+    }
+  }
+
+  /* Problem statement: a reading surface with its own rhythm. */
+  & .ui.bottom.attached.segment.font-content {
+    padding: 24px 28px;
+    border-radius: var(--av-radius-panel);
+    color: var(--av-text);
+    line-height: 1.85;
+  }
+
+  & .font-content :is(h1, h2, h3) {
+    margin-top: 28px;
+    margin-bottom: 14px;
+    color: var(--av-heading);
+    line-height: 1.5;
+  }
+
+  & .font-content h2 {
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--av-tint);
+    font-size: 21px;
+  }
+
+  & .font-content > div > :is(h1, h2, h3):first-child {
+    margin-top: 0;
+  }
+
+  & .font-content p {
+    margin-bottom: 14px;
+  }
+
+  & .font-content pre,
+  & #submission_content pre {
+    overflow-x: auto;
+    max-width: 100%;
+    tab-size: 4;
+    line-height: 1.7;
+  }
+
+  & .font-content pre code,
+  & #submission_content pre code {
+    font-family: Consolas, "Cascadia Code", monospace;
+    font-size: 13px;
+    line-height: inherit;
+  }
+
+  & .font-content .ui.existing.segment,
+  & #submission_content .ui.existing.segment {
+    padding: 18px 20px;
+    border: 1px solid var(--av-border);
+    border-radius: var(--av-radius-surface);
+    background: var(--av-fill-surface);
+    box-shadow: none;
+  }
+
+  & .font-content .ui.copy.button {
+    border-radius: var(--av-radius-control);
+    background: var(--av-tint);
+    color: var(--av-accent);
+  }
+
+  /* Submission detail: the source panel keeps its own controls. */
+  & #submission_content {
+    & .ui.existing.segment:has(> .ui.button) {
+      padding-top: 54px;
+      background: var(--av-fill-paper);
+      box-shadow: var(--av-shadow);
+    }
+
+    & .ui.existing.segment > .ui.button {
+      position: absolute;
+      top: 0;
+      margin: 0;
+      background: var(--av-tint);
+      color: var(--av-accent);
+    }
+
+    & .ui.existing.segment > [onclick^="toggleFormattedCode("] {
+      left: 0;
+      right: auto !important;
+      border-radius: var(--av-radius-surface) 0 var(--av-radius-surface) 0 !important;
+    }
+
+    & .ui.styled.accordion {
+      border: 1px solid var(--av-border);
+      border-radius: var(--av-radius-surface);
+      box-shadow: var(--av-shadow);
+      overflow: hidden;
+    }
+
+    & .ui.styled.accordion .title {
+      padding: 14px 18px;
+      border-top-color: var(--av-border);
+      color: var(--av-muted);
+    }
+
+    & .ui.styled.accordion .title.active {
+      background: var(--av-fill-surface);
+    }
+
+    & .ui.styled.accordion .content {
+      border-color: var(--av-border);
+    }
+  }
+}
+
+@media (hover: hover) {
+  html[data-asterveil-appearance="polished"] #submission_content .ui.styled.accordion .title:hover {
+    background: var(--av-hover);
+  }
+}
+
+@media (max-width: 767px) {
+  html[data-asterveil-appearance="polished"]
+    .ui.main.container
+    .ui.bottom.attached.segment.font-content {
+    padding: 18px;
+  }
+}
+
+/* Answer editor: Monaco still owns its internal layout. */
+html[data-asterveil-appearance="polished"] {
+  & #submit_code {
+    & #languages-menu {
+      height: 480px !important;
+    }
+
+    & > .ui.grid:has(#testcase-menu) {
+      display: grid;
+      grid-template-columns: 176px minmax(0, 1fr);
+      margin: 0;
+      border: 1px solid var(--av-border);
+      border-radius: var(--av-radius-panel);
+      background: var(--av-fill-paper);
+      box-shadow: var(--av-shadow);
+      overflow: hidden;
+    }
+
+    & > .ui.grid:has(#testcase-menu) > .column {
+      width: 100% !important;
+      min-width: 100%;
+      max-width: 100%;
+      height: 480px;
+      margin: 0 !important;
+      padding: 0;
+    }
+
+    & #testcase-menu {
+      width: 100%;
+      height: 100% !important;
+      margin: 0;
+      padding: 12px 8px;
+      border: 0;
+      border-right: 1px solid var(--av-border);
+      border-radius: 0;
+      background: var(--av-surface);
+      box-shadow: none;
+      overflow-y: auto !important;
+    }
+
+    & #testcase-menu .item {
+      margin-bottom: 4px;
+      padding: 12px;
+      border-radius: var(--av-radius-control) !important;
+      color: var(--av-muted);
+      font:
+        13px / 1.5 Consolas,
+        "Cascadia Code",
+        monospace;
+      overflow-wrap: anywhere;
+    }
+
+    & #testcase-menu .item::before,
+    & #testcase-menu .item::after {
+      display: none;
+    }
+
+    & #testcase-menu .item:hover {
+      background: var(--av-hover);
+      color: var(--av-accent);
+    }
+
+    & #testcase-menu .active.item {
+      background: var(--av-tint);
+      color: var(--av-accent);
+      box-shadow: inset 3px 0 var(--av-accent);
+      font-weight: 600;
+    }
+
+    & > .ui.grid:has(#testcase-menu) .editor {
+      top: 12px;
+      left: 0;
+      height: calc(100% - 24px) !important;
+      border: 0 !important;
+    }
+
+    & .editor .monaco-editor,
+    & .editor .monaco-editor-background,
+    & .editor .monaco-editor .margin {
+      background-color: var(--av-paper);
+      color: var(--av-text);
+    }
+
+    & .editor .monaco-editor .mtk1 {
+      color: var(--av-text);
+    }
+
+    & .editor .monaco-editor .line-numbers {
+      color: var(--av-muted);
+    }
+
+    & .editor .monaco-editor .current-line {
+      border: 0;
+      background-color: var(--av-surface);
+    }
+
+    & .editor .monaco-editor .cursor {
+      border-color: var(--av-accent);
+      background-color: var(--av-accent);
+    }
+
+    & .editor .monaco-editor .selected-text {
+      background-color: color-mix(in srgb, var(--av-accent) 22%, transparent);
+    }
+
+    & > .ui.grid:has(#testcase-menu) > .ui.form {
+      grid-column: 1 / -1;
+      padding: 14px 18px;
+      border-top: 1px solid var(--av-border);
+      background: var(--av-fill-surface);
+    }
+
+    & > .ui.grid:has(#testcase-menu) .inline.fields {
+      margin: 0;
+    }
+
+    & > .ui.grid:has(#testcase-menu) .field {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 10px 16px;
+      padding: 0;
+    }
+  }
+
+  & #submit_code:has(#testcase-menu) label[for="answer"] {
+    margin: 0;
+    color: var(--av-muted);
+    font-size: 12px;
+    font-weight: 400;
+  }
+
+  & #submit_code:has(#testcase-menu) input[type="file"] {
+    width: 300px;
+    max-width: 100%;
+    padding: 6px;
+    border: 1px solid var(--av-border);
+    border-radius: var(--av-radius-control);
+    background: var(--av-paper);
+    color: var(--av-muted);
+  }
+
+  & #submit_code:has(#testcase-menu) input[type="file"]::file-selector-button {
+    margin-right: 10px;
+    padding: 7px 12px;
+    border: 0;
+    border-radius: 5px;
+    background: var(--av-tint);
+    color: var(--av-accent);
+    cursor: pointer;
+  }
+
+  & #submit_code:has(#testcase-menu) #submit-button {
+    border-radius: var(--av-radius-control);
+    background: var(--av-solid, var(--av-accent, #3b82c4));
+    color: var(--av-on-accent);
+  }
+
+  & #submit_code:has(#testcase-menu) #submit-button:hover {
+    background: color-mix(in srgb, var(--av-solid, var(--av-accent)) 94%, #000);
+  }
+}
+
+@media (max-width: 600px) {
+  html[data-asterveil-appearance="polished"] {
+    & #submit_code > .ui.grid:has(#testcase-menu) {
+      grid-template-columns: 112px minmax(0, 1fr);
+    }
+
+    & #submit_code #testcase-menu {
+      padding: 10px 6px;
+    }
+  }
+}
+
+/* Chat: the site owns the conversation state machine. */
+html[data-asterveil-appearance="polished"] {
+  & #chat-app {
+    grid-template-columns: 280px minmax(0, 1fr);
+    border-color: var(--av-border);
+    border-radius: var(--av-radius-panel);
+    background: var(--av-fill-paper);
+    color: var(--av-text);
+    box-shadow: var(--av-shadow);
+
+    & :is(.chat-sidebar, .chat-messages) {
+      background: var(--av-fill-surface);
+      border-color: var(--av-border);
+    }
+
+    & :is(.chat-sidebar-header, .chat-main-header, .chat-composer) {
+      background: var(--av-fill-paper);
+      border-color: var(--av-border);
+    }
+
+    & .chat-sidebar-header {
+      padding: 18px 16px;
+    }
+
+    & .chat-search > .icon {
+      color: var(--av-icon);
+    }
+
+    & :is(.ui.header, .chat-main-title, .chat-conversation-title, .chat-image-preview-name) {
+      color: var(--av-heading);
+    }
+
+    &
+      :is(
+        .chat-section-title,
+        .chat-conversation-meta,
+        .chat-main-subtitle,
+        .chat-message-meta,
+        .chat-counter,
+        .chat-empty,
+        .chat-image-preview-info
+      ) {
+      color: var(--av-muted);
+    }
+
+    & .chat-conversation {
+      padding: 12px 14px;
+    }
+
+    & .chat-conversation:hover {
+      background: var(--av-hover);
+    }
+
+    & .chat-conversation.active {
+      border-left-color: var(--av-accent);
+      background: var(--av-tint);
+    }
+
+    & .chat-conversation.active .chat-conversation-title {
+      color: var(--av-accent);
+    }
+
+    & .chat-avatar {
+      background: var(--av-tint);
+      color: var(--av-accent);
+    }
+
+    & .chat-avatar.group {
+      border-radius: var(--av-radius-panel);
+      background: var(--av-solid, var(--av-accent, #3b82c4));
+      color: var(--av-on-accent);
+    }
+
+    & .chat-main-header {
+      flex-shrink: 0;
+    }
+
+    & .chat-messages {
+      padding: 22px;
+    }
+
+    & .chat-message-content {
+      border-color: var(--av-border);
+      border-radius: var(--av-radius-panel);
+      background: var(--av-paper);
+      color: var(--av-text);
+    }
+
+    & .chat-message.mine .chat-message-content {
+      border-color: var(--av-border);
+      background: var(--av-tint);
+    }
+
+    & .chat-message-content img.chat-inline-image {
+      max-width: min(360px, 100%);
+      border-radius: var(--av-radius-control);
+    }
+
+    & .chat-composer {
+      padding: 14px 18px;
+    }
+
+    & :is(#chat-filter, #chat-input) {
+      border-color: var(--av-border);
+      border-radius: var(--av-radius-control);
+      background: var(--av-surface);
+      color: var(--av-text);
+    }
+
+    & #chat-input {
+      height: 112px;
+    }
+
+    & :is(#chat-filter, #chat-input)::placeholder {
+      color: var(--av-muted);
+    }
+
+    & :is(#chat-filter, #chat-input):focus {
+      border-color: var(--av-focus);
+    }
+
+    & .chat-image-preview {
+      border-color: var(--av-border);
+      border-radius: var(--av-radius-control);
+      background: var(--av-fill-surface);
+    }
+
+    & .ui.button:not(.basic) {
+      border-radius: var(--av-radius-control);
+      background: var(--av-tint);
+      color: var(--av-accent);
+    }
+
+    & #send-chat {
+      background: var(--av-solid, var(--av-accent, #3b82c4));
+      color: var(--av-on-accent);
+    }
+
+    & #send-chat:hover {
+      background: color-mix(in srgb, var(--av-solid, var(--av-accent)) 94%, #000);
+    }
+
+    & :is(.chat-conversation-list, .chat-messages, .chat-message-content) {
+      scrollbar-color: var(--av-border) transparent;
+      scrollbar-width: thin;
+    }
+  }
+}
+
+@media (max-width: 900px) {
+  html[data-asterveil-appearance="polished"] #chat-app {
+    grid-template-columns: 220px minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 600px) {
+  html[data-asterveil-appearance="polished"] {
+    & #chat-app {
+      height: max(680px, calc(100dvh - 120px));
+      grid-template-columns: minmax(0, 1fr);
+      grid-template-rows: 200px minmax(0, 1fr);
+
+      & .chat-sidebar {
+        border-right: 0;
+        border-bottom: 1px solid var(--av-border);
+      }
+
+      & .chat-composer-actions {
+        flex-wrap: wrap;
+      }
+
+      & .right-actions {
+        margin-left: auto;
+      }
+
+      & :is(.chat-sidebar-header, .chat-composer, .chat-messages) {
+        padding: 12px;
+      }
+    }
+  }
+}
+
+html[data-asterveil-appearance="polished"] {
+  /* Virtual judge accounts: the template nests a second main container. */
+  & .ui.main.container > .ui.main.container {
+    width: 100%;
+    /* The native mobile container margins otherwise apply twice to this nested template. */
+    margin: 0 !important;
+
+    & > h2.ui.header {
+      margin-bottom: 22px;
+      font-size: 26px;
+    }
+
+    & > .ui.segment {
+      padding: 22px;
+      margin: 0 0 20px;
+      border: 1px solid var(--av-border);
+      border-radius: var(--av-radius-panel);
+      background: var(--av-paper);
+      box-shadow: var(--av-shadow);
+    }
+
+    & > .ui.segment:has(.ui.table) {
+      overflow-x: auto;
+    }
+
+    & > .ui.segment > h3.ui.header {
+      margin: 0 0 18px;
+      font-size: 17px;
+      font-weight: 600;
+    }
+  }
+
+  & .ui.segment > .ui.info.message {
+    padding: 14px 16px;
+    margin: 0;
+    border: 1px solid var(--av-border);
+    border-radius: var(--av-radius-control);
+    background: var(--av-fill-surface);
+    color: var(--av-muted);
+    box-shadow: none;
+  }
+
+  & #bind-form.ui.form {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px 20px;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+
+    & > .field {
+      min-width: 0;
+      margin: 0;
+    }
+
+    & > .field:has(> select[name="foreign_oj"]),
+    & > .ui.button {
+      grid-column: 1 / -1;
+    }
+
+    & select[hidden] {
+      display: none;
+    }
+
+    & input {
+      min-height: 42px;
+      caret-color: var(--av-text);
+    }
+
+    &:not(.error) .field:not(.error) input:autofill {
+      -webkit-text-fill-color: var(--av-text);
+      box-shadow: inset 0 0 0 1000px var(--av-surface) !important;
+      border-color: var(--av-border) !important;
+    }
+
+    &:not(.error) .field:not(.error) input:autofill:focus {
+      box-shadow:
+        inset 0 0 0 1000px var(--av-paper),
+        0 0 0 3px var(--av-ring) !important;
+      border-color: var(--av-focus) !important;
+    }
+
+    & > .ui.button {
+      justify-self: start;
+      min-height: 40px;
+      padding: 11px 20px;
+      margin: 0;
+    }
+  }
+
+  & :is(#bind-form > .ui.button, .ui.button.test-account, #captcha-submit-btn) {
+    border-radius: var(--av-radius-control);
+    background: var(--av-solid);
+    color: var(--av-on-accent);
+  }
+
+  &
+    :is(#bind-form > .ui.button, .ui.button.test-account, #captcha-submit-btn):is(
+      :hover,
+      :focus-visible
+    ) {
+    background: color-mix(in srgb, var(--av-solid) 94%, #000);
+  }
+
+  & #bind-form > .ui.button:focus-visible {
+    outline: 2px solid var(--av-focus);
+    outline-offset: 3px;
+  }
+
+  & #captcha-modal {
+    border: 1px solid var(--av-border);
+    border-radius: var(--av-radius-panel);
+    background: var(--av-fill-paper);
+    color: var(--av-text);
+    box-shadow: var(--av-shadow);
+
+    & > :is(.header, .content, .actions) {
+      padding: 20px 22px;
+      border-color: var(--av-border);
+      background: var(--av-paper);
+      color: var(--av-text);
+    }
+
+    & > .header {
+      border-radius: var(--av-radius-panel) var(--av-radius-panel) 0 0;
+      color: var(--av-heading);
+    }
+
+    & > .actions {
+      border-radius: 0 0 var(--av-radius-panel) var(--av-radius-panel);
+      background: var(--av-surface);
+    }
+
+    & #captcha-input {
+      border-color: var(--av-border);
+      border-radius: var(--av-radius-control);
+      background: var(--av-surface);
+      color: var(--av-text);
+    }
+  }
+}
+
+@media (max-width: 767px) {
+  html[data-asterveil-appearance="polished"] {
+    & .ui.main.container > .ui.main.container > .ui.segment {
+      padding: 18px;
+    }
+
+    & #bind-form.ui.form {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+}
+
+/* ------------------------------------------------------------- site chrome */
+
+/* Semantic UI components the site uses outside themed cards: the modal backdrop,
+   loading spinners, the problem search box and horizontal stat lists. */
+html[data-asterveil-appearance="polished"] {
+  & .ui.dimmer {
+    background-color: color-mix(in srgb, #101a24 46%, transparent);
+  }
+
+  & .ui.loader::before {
+    border-color: color-mix(in srgb, var(--av-accent) 18%, transparent) !important;
+  }
+
+  & .ui.loader::after {
+    border-color: var(--av-accent) transparent transparent !important;
+  }
+
+  /* The site lifts this field with an inline negative margin so its taller
+     native input centres inside the wrapper. The field now matches the 28px
+     control line, so the offset is cleared to keep the row on one baseline. */
+  /* The site sizes and centres its own search field; the theme only skins it. */
+  & .ui.search .prompt {
+    border: 1px solid var(--av-border);
+    border-radius: var(--av-radius-control);
+    background: var(--av-paper);
+    color: var(--av-text);
+    padding-right: 0.86em;
+    box-shadow: none;
+  }
+
+  & .ui.search .prompt:focus {
+    border-color: var(--av-focus);
+    box-shadow: 0 0 0 3px var(--av-ring);
+    outline: none;
+  }
+
+  & .ui.search > .results {
+    border: 1px solid var(--av-border);
+    border-radius: var(--av-radius-surface);
+    background: var(--av-paper);
+    box-shadow: var(--av-shadow);
+    overflow: hidden;
+  }
+
+  & .ui.search > .results .result {
+    border-color: var(--av-border);
+    padding: 8px 12px;
+  }
+
+  & .ui.search > .results .result:hover {
+    background: var(--av-hover);
+  }
+
+  & .ui.list > .item {
+    color: var(--av-text);
+  }
+
+  & .ui.list > .item + .item {
+    margin-top: 2px;
+  }
+}
+
+/* -------------------------------------------------------------------- dark */
+
+@media screen {
+  html[data-asterveil-appearance="polished"] {
+    color-scheme: var(--av-scheme);
+  }
+
+  html[data-asterveil-scheme="dark"] {
+    background: var(--av-canvas);
+
+    & body {
+      color: var(--av-text);
+    }
+
+    &
+      :is(
+        .ui.menu,
+        .ui.segment,
+        .ui.card,
+        .ui.cards > .card,
+        .ui.table,
+        .ui.styled.accordion,
+        .ui.modal,
+        .ui.popup,
+        .ui.dropdown .menu
+      ) {
+      background-color: var(--av-fill-paper);
+      color: var(--av-text);
+      border-color: var(--av-border);
+    }
+
+    &
+      :is(
+        .ui.header,
+        .ui.form .field > label,
+        .ui.checkbox label,
+        .ui.progress > .label,
+        .ui.accordion .title,
+        .ui.card > .content > .header
+      ) {
+      color: var(--av-heading);
+    }
+
+    & :is(.ui.menu .item, .ui.dropdown .menu > .item) {
+      color: var(--av-text) !important;
+      border-color: var(--av-border);
+    }
+
+    & .ui.menu .active.item,
+    & .ui.dropdown .menu > .item:is(:hover, .selected, .active) {
+      background: var(--av-tint) !important;
+      color: var(--av-accent) !important;
+    }
+
+    & .ui.sidebar .ui.styled.accordion .accordion {
+      background: var(--av-fill-paper);
+      box-shadow: none;
+    }
+
+    & .ui.sidebar .ui.styled.accordion .title {
+      color: var(--av-text);
+      border-color: var(--av-border);
+    }
+
+    & .ui.sidebar .ui.styled.accordion .title:is(:hover, .active) {
+      background: var(--av-tint);
+      color: var(--av-accent);
+    }
+
+    & .ui.sidebar .ui.buttons > .ui.button:hover {
+      background: var(--av-hover);
+      color: var(--av-accent);
+    }
+
+    & .ui.sidebar .ui.buttons > .ui.button.active {
+      background: var(--av-tint) !important;
+      color: var(--av-accent) !important;
+      box-shadow: inset 3px 0 var(--av-accent);
+    }
+
+    & .ui.menu .ui.dropdown .menu {
+      background: var(--av-fill-paper);
+      border-color: var(--av-border);
+    }
+
+    & .ui.menu .ui.dropdown .menu > .item {
+      color: var(--av-text) !important;
+    }
+
+    & .ui.menu .ui.dropdown .menu > .item:is(:hover, .active, .selected) {
+      background: var(--av-tint) !important;
+      color: var(--av-accent) !important;
+    }
+
+    & :is(.ui.table thead th, .ui.table tfoot th) {
+      background: var(--av-fill-surface);
+      color: var(--av-heading);
+      border-color: var(--av-border);
+    }
+
+    & .ui.table :is(td, th) {
+      border-color: var(--av-border);
+    }
+
+    /* Row states keep their signal: the site washes rows near-white with
+       !important, so the dark remix has to be declared the same way. */
+    & .ui.table > tbody > tr.positive {
+      background: color-mix(in srgb, var(--av-paper) 86%, #3f9e6b) !important;
+      color: color-mix(in srgb, #3f9e6b 68%, var(--av-text)) !important;
+    }
+
+    & .ui.table > tbody > tr.negative {
+      background: color-mix(in srgb, var(--av-paper) 86%, #c96a6a) !important;
+      color: color-mix(in srgb, #c96a6a 68%, var(--av-text)) !important;
+    }
+
+    & .ui.table > tbody > tr.warning {
+      background: color-mix(in srgb, var(--av-paper) 86%, #c9903f) !important;
+      color: color-mix(in srgb, #c9903f 68%, var(--av-text)) !important;
+    }
+
+    & .ui.table > tbody > tr.error {
+      background: color-mix(in srgb, var(--av-paper) 86%, #bf5a52) !important;
+      color: color-mix(in srgb, #bf5a52 68%, var(--av-text)) !important;
+    }
+
+    &
+      :is(
+        .ui.input > input,
+        .ui.form input:not([type="checkbox"], [type="radio"], [type="submit"]),
+        .ui.form textarea,
+        .ui.selection.dropdown,
+        select
+      ) {
+      background-color: var(--av-fill-paper);
+      border-color: var(--av-border);
+      color: var(--av-text);
+    }
+
+    & :is(input, textarea)::placeholder {
+      color: var(--av-muted);
+    }
+
+    &
+      :is(
+        .ui.card .meta,
+        .ui.card .description,
+        .ui.card > .extra,
+        .ui.form .inline.fields > label
+      ) {
+      color: var(--av-muted);
+    }
+
+    &
+      :is(.ui.button, .ui.label):not(
+        .primary,
+        .secondary,
+        .positive,
+        .negative,
+        .red,
+        .orange,
+        .yellow,
+        .olive,
+        .green,
+        .teal,
+        .blue,
+        .violet,
+        .purple,
+        .pink,
+        .brown,
+        .grey,
+        .black,
+        .inverted
+      ) {
+      background-color: var(--av-tint);
+      color: var(--av-text);
+    }
+
+    & :is(.ui.basic.button, .ui.basic.label) {
+      background: var(--av-paper) !important;
+      color: var(--av-text) !important;
+      box-shadow: inset 0 0 0 1px var(--av-border);
+    }
+
+    & .ui.main.container a:not(.ui.button, [style*="color"]) {
+      color: var(--av-accent);
+    }
+
+    & :is(.ui.segment pre, .ui.segment > code, .ui.segment pre > code, .ui.main.container .hljs) {
+      background-color: var(--av-surface);
+      color: var(--av-text);
+      border-color: var(--av-border);
+    }
+
+    & .ui.main.container canvas {
+      /* Chart.js paints text into pixels; keep its existing light chart readable. */
+      border-radius: var(--av-radius-control);
+      background: #fff;
+    }
+
+    & .hljs {
+      background-color: var(--av-surface) !important;
+      color: var(--av-text);
+    }
+
+    & .hljs :is(.hljs-comment, .hljs-quote) {
+      color: #a3afbf;
+    }
+
+    & .hljs :is(.hljs-keyword, .hljs-selector-tag, .hljs-type) {
+      color: #c5adf5;
+    }
+
+    & .hljs :is(.hljs-string, .hljs-regexp, .hljs-addition) {
+      color: #b4cf9b;
+    }
+
+    & .hljs :is(.hljs-number, .hljs-literal, .hljs-meta) {
+      color: #e4b388;
+    }
+
+    & .hljs :is(.hljs-title, .hljs-built_in, .hljs-attr) {
+      color: #8acdd4;
+    }
+
+    & :is(.status.accepted, .score.score_10) {
+      color: #8da9ff;
+    }
+  }
+}

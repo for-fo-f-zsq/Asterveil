@@ -1,5 +1,6 @@
 import {
   firstUserGradeAcademicYear,
+  graduateYearUserGrade,
   isUserGradeAcademicYear,
   userGradeAcademicYear,
 } from './user-grade-year';
@@ -69,6 +70,12 @@ function userName(value: unknown): string {
   if (!name || name.length > 128 || !printable(name))
     throw new Error('姓名须为 1–128 个字符，且不能包含换行或控制字符');
   return name;
+}
+function graduateYearValue(value: unknown): number {
+  const year = typeof value === 'string' && /^\d{4}$/.test(value.trim()) ? Number(value) : value;
+  if (typeof year !== 'number' || !Number.isSafeInteger(year) || year < 1900 || year > 2100)
+    throw new Error('无效的毕业年份');
+  return year;
 }
 function addEntry(entries: Map<string, UserNameRecord>, id: string, record: UserNameRecord): void {
   const previous = entries.get(id);
@@ -207,8 +214,14 @@ export function parseUserNameSource(text: string): readonly UserNameEntry[] {
         .filter(([key]) => key === 'colorKey' || key === 'grade')
         .map(([, grade]) => normalizeUserGrade(grade, academicYear))
         .filter((grade) => grade !== undefined);
-      if (grades.some((grade) => grade !== grades[0])) throw new Error('同一记录的年级不一致');
-      return { name: nameField(record), grade: grades[0] };
+      const graduateGrades = record.fields
+        .filter(([key]) => key === 'graduateYear')
+        .map(([, year]) => year)
+        .filter((year) => year !== undefined && year !== null && year !== '')
+        .map((year) => graduateYearUserGrade(graduateYearValue(year)));
+      const resolved = [...grades, ...graduateGrades];
+      if (resolved.some((grade) => grade !== resolved[0])) throw new Error('同一记录的年级不一致');
+      return { name: nameField(record), grade: resolved[0] };
     } catch (error) {
       throw new Error(`ID ${id}：${error instanceof Error ? error.message : '姓名无效'}`);
     }

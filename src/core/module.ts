@@ -17,6 +17,8 @@ export interface FeatureModule {
 export interface ModuleDefinition {
   readonly id: ModuleId;
   readonly configurationKey?: (settings: Settings) => string;
+  /** Feature switches that live inside another module follow their master switch. */
+  readonly enabled?: (settings: Settings) => boolean;
   readonly matches: (url: URL) => boolean;
   readonly load: () => Promise<FeatureModule>;
 }

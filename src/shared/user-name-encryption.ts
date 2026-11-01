@@ -30,7 +30,7 @@ export async function decryptUserNames(
   password: string,
 ): Promise<readonly UserNameEntry[]> {
   if (
-    data.version !== 1 ||
+    (data.version !== 1 && data.version !== 2) ||
     data.algorithm !== 'AES-GCM' ||
     data.kdf !== 'PBKDF2-SHA256' ||
     data.iterations !== 600_000 ||

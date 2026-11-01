@@ -43,7 +43,7 @@ const { isSettingsRequest } = load('src/shared/protocol.ts');
 const { createSettingsService } = load('src/background/settings-service.ts');
 const image = 'data:image/webp;base64,QUJD';
 
-test('old settings remain usable; background accepts bounded raster data and valid overlays only', () => {
+test('old settings remain usable; background accepts bounded raster data and valid opacities only', () => {
   const old = defaultSettings();
   delete old.background;
   const settings = decodeSettings(old);
@@ -65,12 +65,12 @@ test('old settings remain usable; background accepts bounded raster data and val
       false,
     );
     assert.throws(() =>
-      decodeSettings({ ...old, background: { enabled: true, overlay: 35, image: invalid } }),
+      decodeSettings({ ...old, background: { enabled: true, opacity: 65, image: invalid } }),
     );
   }
-  for (const overlay of [-1, 101, 0.5, NaN, '35']) {
+  for (const opacity of [-1, 101, 0.5, NaN, '35']) {
     assert.equal(
-      isSettingsRequest({ channel: 'asterveil', type: 'settings.background.overlay', overlay }),
+      isSettingsRequest({ channel: 'asterveil', type: 'settings.background.opacity', opacity }),
       false,
     );
   }
@@ -94,12 +94,12 @@ test('concurrent edits preserve image and preferences; failed replacement preser
   });
   await Promise.all([
     service({ type: 'settings.background.image', image }),
-    service({ type: 'settings.background.overlay', overlay: 60 }),
+    service({ type: 'settings.background.opacity', opacity: 60 }),
     service({ type: 'settings.accent', color: '#cf5683' }),
     service({ type: 'settings.background.enabled', enabled: false }),
   ]);
   assert.equal(stored.background.image, image);
-  assert.equal(stored.background.overlay, 60);
+  assert.equal(stored.background.opacity, 60);
   assert.equal(stored.background.enabled, false);
   assert.equal(stored.accentColor, '#cf5683');
   fail = true;
@@ -112,7 +112,7 @@ test('concurrent edits preserve image and preferences; failed replacement preser
   await service({ type: 'settings.background.image', image: null });
   assert.equal(stored.background.image, null);
   assert.equal(stored.background.enabled, false);
-  assert.equal(stored.background.overlay, 60);
+  assert.equal(stored.background.opacity, 60);
 });
 
 test('import rejects unsupported and oversized files before decoding and releases decoded images', async () => {
@@ -157,7 +157,7 @@ test('import rejects unsupported and oversized files before decoding and release
   assert.equal(closed, 2);
 });
 
-test('theme removes backgrounds on disable, unsupported navigation and disposal, and restores on return', () => {
+test('theme keeps backgrounds on every route, removes them on disable and disposal, and restores on return', () => {
   const { document } = parseHTML(
     '<html><body><div class="pusher">Original content</div></body></html>',
   );
@@ -170,37 +170,37 @@ test('theme removes backgrounds on disable, unsupported navigation and disposal,
   const scope = new Scope();
   const home = new URL('https://jx.7fa4.cn:8888/');
   const theme = createPageTheme(scope, home);
-  const settings = { ...defaultSettings(), background: { image, overlay: 35, enabled: true } };
+  const settings = { ...defaultSettings(), background: { image, opacity: 65, enabled: true } };
   const style = document.querySelector('style[data-asterveil="background"]');
-  theme.update(home, settings);
+  theme.update(settings);
   assert.ok(style.textContent.includes(image));
   assert.ok(style.textContent.includes('@media screen'));
-  theme.update(home, { ...settings, colorMode: 'dark' });
+  theme.update({ ...settings, colorMode: 'dark' });
   assert.equal(document.documentElement.getAttribute('data-asterveil-scheme'), 'dark');
   assert.ok(style.textContent.includes('var(--av-background-strength, 35%)'));
   assert.ok(style.textContent.includes('background: transparent !important'));
-  const { previewBackgroundOverlay } = local('src/shared/background-preview.ts');
+  const { previewBackgroundOpacity } = local('src/shared/background-preview.ts');
   const preview = document.querySelector('style[data-asterveil="background-preview"]');
-  previewBackgroundOverlay(72);
-  assert.ok(preview.textContent.includes('72%'));
-  assert.equal(settings.background.overlay, 35);
-  previewBackgroundOverlay(undefined);
+  previewBackgroundOpacity(72);
+  assert.ok(preview.textContent.includes('28%'));
+  assert.equal(settings.background.opacity, 65);
+  previewBackgroundOpacity(undefined);
   assert.equal(preview.textContent, '');
   assert.ok(!style.textContent.includes('.ui.table > thead'));
   for (const disabled of [
     { ...settings, enabled: false },
-    { ...settings, modules: { ...settings.modules, 'ui-polish': false } },
+    { ...settings, modules: { ...settings.modules, 'ui-theme': false } },
     { ...settings, background: { ...settings.background, enabled: false } },
     { ...settings, background: { ...settings.background, image: null } },
   ]) {
-    theme.update(home, disabled);
+    theme.update(disabled);
     assert.equal(style.textContent, '');
-    theme.update(home, settings);
+    theme.update(settings);
     assert.ok(style.textContent.includes(image));
   }
   theme.update(new URL('/download', home), settings);
   assert.equal(style.textContent, '');
-  theme.update(home, settings);
+  theme.update(settings);
   assert.ok(style.textContent.includes(image));
   scope.dispose();
   assert.equal(document.querySelectorAll('style').length, 0);
@@ -208,16 +208,16 @@ test('theme removes backgrounds on disable, unsupported navigation and disposal,
   assert.equal(document.body.textContent, 'Original content');
 });
 
-test('retired background modes are dropped without losing the image or overlay', async () => {
+test('retired background modes are dropped without losing the image or opacity', async () => {
   const old = {
     ...defaultSettings(),
-    background: { image, enabled: true, overlay: 35, mode: 'full' },
+    background: { image, enabled: true, opacity: 65, mode: 'full' },
   };
   for (const mode of ['full', 'page', undefined]) {
     const migrated = decodeSettings({ ...old, background: { ...old.background, mode } });
     assert.equal(migrated.background.image, image);
     assert.equal(migrated.background.enabled, true);
-    assert.equal(migrated.background.overlay, 35);
+    assert.equal(migrated.background.opacity, 65);
     assert.equal('mode' in migrated.background, false);
     assert.equal(
       isSettingsRequest({ channel: 'asterveil', type: 'settings.background.mode', mode }),
@@ -231,9 +231,9 @@ test('retired background modes are dropped without losing the image or overlay',
       stored = next;
     },
   });
-  await service({ type: 'settings.background.overlay', overlay: 50 });
+  await service({ type: 'settings.background.opacity', opacity: 50 });
   assert.equal(stored.background.image, image);
-  assert.equal(stored.background.overlay, 50);
+  assert.equal(stored.background.opacity, 50);
   assert.equal('mode' in stored.background, false);
 });
 

@@ -79,10 +79,6 @@ export function createSettingsService(
         ...current,
         revision: current.revision + 1,
         userNames,
-        problemCopy:
-          command.type === 'settings.problem-copy'
-            ? { ...current.problemCopy, [command.option]: command.enabled }
-            : current.problemCopy,
         enabled: command.type === 'settings.enabled' ? command.enabled : current.enabled,
         accentColor:
           command.type === 'settings.accent' ? command.color.toLowerCase() : current.accentColor,
@@ -93,8 +89,8 @@ export function createSettingsService(
             ? { ...current.background, image: command.image, enabled: command.image !== null }
             : command.type === 'settings.background.enabled'
               ? { ...current.background, enabled: command.enabled }
-              : command.type === 'settings.background.overlay'
-                ? { ...current.background, overlay: command.overlay }
+              : command.type === 'settings.background.opacity'
+                ? { ...current.background, opacity: command.opacity }
                 : current.background,
         homeLayout:
           command.type === 'settings.home.reset'

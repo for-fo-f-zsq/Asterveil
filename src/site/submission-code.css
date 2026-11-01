@@ -1,0 +1,12 @@
+/* biome-ignore-all lint/complexity/noImportantStyles: The extension owns this button; the site-wide theme paints every button and must not repaint it. */
+/* The copy action the module adds to each source panel of a submission. */
+#submission_content .ui.existing.segment > .ui.button[data-asterveil="copy-submission-code"] {
+  right: 0;
+  border-radius: 0 var(--av-radius-surface, 10px) 0 var(--av-radius-surface, 10px);
+  background: var(--av-solid, var(--av-accent, #3b82c4)) !important;
+  color: var(--av-on-accent, #fff) !important;
+}
+
+#submission_content .ui.existing.segment > .ui.button[data-asterveil="copy-submission-code"]:hover {
+  background: color-mix(in srgb, var(--av-solid, var(--av-accent, #3b82c4)) 94%, #000) !important;
+}

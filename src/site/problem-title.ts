@@ -1,9 +1,12 @@
 import type { Scope } from '../core/scope';
 import { copyText } from '../platform/clipboard';
+import { useInlineStyle } from './inline-style';
+import css from './problem-title.css?inline';
 
 export function enhanceProblemTitle(scope: Scope): void {
   const heading = document.querySelector<HTMLElement>('.ui.main.container h1');
   if (!heading) return;
+  useInlineStyle(scope, 'problem-title', css);
   const originalTitle = heading.getAttribute('title');
   heading.title = '双击复制标题';
   heading.classList.add('asterveil-copy-title');

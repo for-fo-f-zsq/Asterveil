@@ -1,7 +1,11 @@
 /* biome-ignore-all lint/complexity/noImportantStyles: Override Semantic UI column widths and inline visibility without changing original styles. */
-[data-av-home-layout] [data-av-home-hidden],
-[data-av-home-layout] > [data-av-home-empty] {
+[data-av-home-layout]:not([data-av-home-editing]) [data-av-home-hidden] {
   display: none !important;
+}
+[data-av-home-layout][data-av-home-editing] [data-av-home-hidden] {
+  opacity: 0.45;
+  outline: 1px dashed var(--av-border, #d8e1ec);
+  outline-offset: -1px;
 }
 .ui.grid[data-av-home-single] > .column:not([data-av-home-empty]) {
   width: 100% !important;
@@ -12,6 +16,166 @@
   color: var(--av-muted, #647184);
   border: 1px dashed var(--av-border, #d8e1ec);
   border-radius: 12px;
+}
+.asterveil-home-editor {
+  position: fixed;
+  top: 12px;
+  left: 12px;
+  z-index: 2147482600;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  margin: 0;
+  padding: 3px;
+  border: 1px solid var(--av-border, #d8e1ec);
+  border-radius: 11px;
+  background: color-mix(in srgb, var(--av-card, #fff) 94%, transparent);
+  box-shadow:
+    0 6px 20px -12px rgb(17 32 51 / 50%),
+    0 1px 2px rgb(17 32 51 / 6%);
+  backdrop-filter: blur(6px);
+}
+.asterveil-home-editor button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--av-muted, #647184);
+  cursor: pointer;
+  transition:
+    background-color 150ms ease,
+    color 150ms ease;
+}
+.asterveil-home-editor button:hover {
+  background: color-mix(in srgb, var(--av-accent, #2563eb) 10%, transparent);
+  color: var(--av-accent, #2563eb);
+}
+.asterveil-home-editor button:active {
+  transform: translateY(1px);
+}
+.asterveil-home-editor .asterveil-home-done {
+  color: var(--av-accent, #2563eb);
+}
+.asterveil-home-editor button:focus-visible,
+.asterveil-home-grip:focus-visible,
+.asterveil-home-eye:focus-visible {
+  outline: 2px solid var(--av-accent, #2563eb);
+  outline-offset: 1px;
+}
+.asterveil-home-edit svg,
+.asterveil-home-done svg,
+.asterveil-home-reset svg {
+  width: 16px;
+  height: 16px;
+}
+.asterveil-home-edit svg {
+  fill: currentColor;
+}
+.asterveil-home-editor.is-editing .asterveil-home-edit {
+  display: none;
+}
+.asterveil-home-actions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+.asterveil-home-actions[hidden] {
+  display: none;
+}
+.asterveil-home-status {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  padding: 4px 8px;
+  border: 1px solid var(--av-border, #d8e1ec);
+  border-radius: 6px;
+  background: var(--av-card, #fff);
+  box-shadow: 0 6px 18px -10px rgb(17 32 51 / 45%);
+  font-size: 12px;
+  color: #b42318;
+  white-space: nowrap;
+}
+.asterveil-home-status:empty {
+  display: none;
+}
+.asterveil-home-tool {
+  float: right;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  margin-left: 8px;
+}
+.asterveil-home-grip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 4px;
+  color: var(--av-muted, #647184);
+  cursor: grab;
+}
+.asterveil-home-grip:active {
+  cursor: grabbing;
+}
+.asterveil-home-grip svg,
+.asterveil-home-eye svg {
+  width: 14px;
+  height: 14px;
+  fill: currentColor;
+}
+.asterveil-home-eye {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--av-muted, #647184);
+  cursor: pointer;
+}
+.asterveil-home-grip:hover,
+.asterveil-home-eye:hover {
+  background: color-mix(in srgb, currentColor 14%, transparent);
+}
+.asterveil-home-eye[aria-pressed="true"] {
+  color: var(--av-accent, #2563eb);
+}
+[data-av-home-dragged] {
+  opacity: 0.55;
+}
+.asterveil-home-drop {
+  position: fixed;
+  z-index: 2147482700;
+  height: 3px;
+  border-radius: 3px;
+  background: var(--av-accent, #2563eb);
+  box-shadow:
+    0 0 0 1px var(--av-card, #fff),
+    0 2px 8px -2px color-mix(in srgb, var(--av-accent, #2563eb) 55%, transparent);
+  pointer-events: none;
+}
+.asterveil-home-drop[hidden] {
+  display: none;
+}
+.asterveil-home-drop::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: -3px;
+  width: 7px;
+  height: 7px;
+  margin-top: -3.5px;
+  border-radius: 50%;
+  background: var(--av-accent, #2563eb);
 }
 @media (max-width: 767px) {
   .ui.grid[data-av-home-layout] > .column {

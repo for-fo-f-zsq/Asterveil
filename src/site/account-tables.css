@@ -1,0 +1,62 @@
+/* biome-ignore-all lint/complexity/noImportantStyles: The site inlines percentage column widths that a wide table has to override. */
+/* Wide tables: the module marks the container when a table needs the viewport;
+   these rules stay out of the way of compact mode. */
+.ui.main.container.asterveil-has-wide-table:not([data-asterveil-table-size="compact"]) {
+  width: calc(100% - 48px);
+  max-width: none;
+}
+
+.ui.main.container .padding.asterveil-wide-padding {
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+}
+
+.ui.main.container .padding > .ui.table.asterveil-wide-table {
+  table-layout: auto !important;
+  width: max-content;
+  min-width: 100%;
+}
+
+.ui.main.container
+  .padding
+  > .ui.table.asterveil-wide-table
+  > :is(thead, tbody)
+  > tr
+  > :is(th, td) {
+  width: auto !important;
+  min-width: 72px;
+  padding: 10px var(--av-cell-padding, 12px);
+  white-space: nowrap;
+  word-break: normal;
+  overflow-wrap: normal;
+}
+
+/* Directory-style links hold a readable column of their own. */
+.ui.main.container
+  .padding
+  > .ui.table.asterveil-wide-table
+  > tbody
+  > tr
+  > td
+  > a:is([href^="/user/"], [href^="/problem/"]) {
+  display: inline-block;
+  min-width: 120px;
+  max-width: 260px;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.ui.main.container[data-asterveil-table-size="compact"] .padding > .ui.table.asterveil-wide-table {
+  width: 100%;
+  font-size: 12px;
+}
+
+.ui.main.container[data-asterveil-table-size="compact"]
+  .padding
+  > .ui.table.asterveil-wide-table
+  > :is(thead, tbody)
+  > tr
+  > :is(th, td) {
+  min-width: 56px;
+  padding: 6px 8px;
+}

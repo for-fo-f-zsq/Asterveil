@@ -56,12 +56,10 @@ for (const product of ['Asterveil', 'Asterveil Pro']) {
       }),
     );
     let markdown = source;
-    let hold;
     const errors = [];
     await context.route(/^https:\/\/(?:jx|in)\.7fa4\.cn:8888\//, async (route) => {
       const path = new URL(route.request().url()).pathname;
       if (path.endsWith('/markdown/html')) {
-        if (hold) await hold;
         return route
           .fulfill({
             contentType: 'text/html; charset=utf-8',
@@ -76,28 +74,9 @@ for (const product of ['Asterveil', 'Asterveil Pro']) {
     const settings = async (tab = page) => {
       await tab.getByRole('button', { name: `打开 ${product} 设置`, exact: true }).click();
       await tab.getByRole('button', { name: '功能模块', exact: true }).click();
-      await tab
-        .locator('.module[data-module-id="problem-copy"] > .row > input[role="switch"]')
-        .waitFor();
+      await tab.locator('.module[data-module-id="ui-helpers"]').waitFor();
     };
-    const card = page.locator('.module[data-module-id="problem-copy"]');
-    const select = async (option, enabled) => {
-      await card.locator(`[data-problem-copy="${option}"]`).setChecked(enabled);
-      if (option === 'hideOriginal') {
-        await page.waitForFunction(
-          (value) => document.querySelector('#native-source').hidden === value,
-          enabled,
-        );
-      } else {
-        await page.waitForFunction(
-          ({ selector, enabled }) => !!document.querySelector(selector) === enabled,
-          {
-            selector: option === 'source' ? sourceButton : descriptionButton,
-            enabled,
-          },
-        );
-      }
-    };
+    const card = page.locator('.module[data-module-id="ui-helpers"]');
     // Capture clipboard writes in this extension's isolated world, leaving the OS clipboard intact.
     async function clipboard(tab, initialize = false) {
       return worker.evaluate(
@@ -136,36 +115,16 @@ for (const product of ['Asterveil', 'Asterveil Pro']) {
     await clipboard(page, true);
     await copy(page, sourceButton, source);
     await copy(page, descriptionButton, description);
-    await page.locator('.column > h1').click();
-    assert.equal(
-      await page.locator(sourceButton).evaluate((node) => getComputedStyle(node).backgroundColor),
-      await page
-        .locator(descriptionButton)
-        .evaluate((node) => getComputedStyle(node).backgroundColor),
-    );
     await settings();
-    assert.equal(await card.locator('[data-problem-copy="source"]').isChecked(), true);
-    assert.equal(await card.locator('[data-problem-copy="description"]').isChecked(), true);
-    assert.equal(await card.locator('[data-problem-copy="hideOriginal"]').isChecked(), false);
-    await card.screenshot({ path: resolve(out, `${product}-options.png`) });
-    await select('source', false);
-    await select('hideOriginal', true);
+    assert.equal(await card.locator('[data-problem-copy]').count(), 0);
+    await card.screenshot({ path: resolve(out, `${product}-helpers.png`) });
+    await card.getByRole('switch', { name: '辅助功能', exact: true }).uncheck();
+    await page.waitForFunction((selector) => !document.querySelector(selector), sourceButton);
+    assert.equal(await page.locator('#native-source').isVisible(), true);
+    await card.getByRole('switch', { name: '辅助功能', exact: true }).check();
+    await page.locator(descriptionButton).waitFor();
     await page.getByRole('button', { name: '关闭设置', exact: true }).click();
-    await page
-      .locator('.column > .ui.buttons')
-      .screenshot({ path: resolve(out, `${product}-source-hidden.png`) });
     await copy(page, descriptionButton, description);
-    await settings();
-    await select('description', false);
-    await card.getByRole('switch', { name: '复制题面', exact: true }).uncheck();
-    await page.waitForFunction(() => !document.querySelector('#native-source').hidden);
-    assert.equal(await card.locator('[data-problem-copy="source"]').isDisabled(), true);
-    assert.equal(await page.locator(sourceButton).count(), 0);
-    assert.equal(await page.locator(descriptionButton).count(), 0);
-    await card.getByRole('switch', { name: '复制题面', exact: true }).check();
-    await page.waitForFunction(() => document.querySelector('#native-source').hidden);
-    await select('source', true);
-    await select('description', true);
     await worker.evaluate(async () => {
       const key = 'asterveil:settings';
       const current = (await chrome.storage.local.get(key))[key];
@@ -173,18 +132,14 @@ for (const product of ['Asterveil', 'Asterveil Pro']) {
         [key]: {
           ...current,
           revision: current.revision + 1,
-          modules: { ...current.modules, 'ui-polish': false },
+          modules: { ...current.modules, 'ui-theme': false },
         },
       });
     });
     await page.waitForFunction(
       () => !document.documentElement.hasAttribute('data-asterveil-appearance'),
     );
-    await page.getByRole('button', { name: '关闭设置', exact: true }).click();
-    await page
-      .locator('.column > .ui.buttons')
-      .screenshot({ path: resolve(out, `${product}-source-unpolished.png`) });
-    await copy(page, descriptionButton, description);
+    await copy(page, sourceButton, source);
     markdown = '## 输入格式\n这不是题目描述。';
     const copies = (await clipboard(page)).length;
     await page.locator(descriptionButton).click();
@@ -194,98 +149,20 @@ for (const product of ['Asterveil', 'Asterveil Pro']) {
     );
     assert.equal((await clipboard(page)).length, copies);
     markdown = source;
-    let release;
-    hold = new Promise((resolve) => {
-      release = resolve;
-    });
-    await page.locator(sourceButton).click();
-    await page.waitForFunction(
-      (selector) => document.querySelector(selector)?.disabled,
-      sourceButton,
-    );
-    await settings();
-    await card.getByRole('switch', { name: '复制题面', exact: true }).uncheck();
-    await page.waitForFunction(() => !document.querySelector('#native-source').hidden);
-    release();
-    hold = undefined;
-    await card.getByRole('switch', { name: '复制题面', exact: true }).check();
-    await page.locator(sourceButton).waitFor({ state: 'attached' });
-    assert.equal((await clipboard(page)).length, copies);
     const second = await context.newPage();
     await second.goto('https://in.7fa4.cn:8888/contest/9/problem/1');
     await second.locator(descriptionButton).waitFor();
-    assert.equal(await second.locator('#native-source').isVisible(), false);
+    assert.equal(await second.locator('#native-source').isVisible(), true);
     await clipboard(second, true);
     await copy(second, descriptionButton, description);
-    await select('source', false);
-    await second.waitForFunction((selector) => !document.querySelector(selector), sourceButton);
     await second.close();
-    await worker.evaluate(async () => {
-      const key = 'asterveil:settings';
-      const current = (await chrome.storage.local.get(key))[key];
-      await chrome.storage.local.set({
-        [key]: {
-          ...current,
-          revision: current.revision + 1,
-          modules: { ...current.modules, 'ui-polish': true },
-          colorMode: 'dark',
-        },
-      });
-    });
-    await page.waitForFunction(
-      () => document.documentElement.getAttribute('data-asterveil-scheme') === 'dark',
-    );
-    await card.screenshot({ path: resolve(out, `${product}-options-dark.png`) });
-    for (const [scheme, fill] of [
-      ['light', '#101018'],
-      ['dark', '#ffffff'],
-    ]) {
-      const image = await page.evaluate((fill) => {
-        const canvas = document.createElement('canvas');
-        canvas.width = canvas.height = 8;
-        const drawing = canvas.getContext('2d');
-        drawing.fillStyle = fill;
-        drawing.fillRect(0, 0, 8, 8);
-        return canvas.toDataURL('image/png');
-      }, fill);
-      await worker.evaluate(
-        async ({ image, scheme }) => {
-          const key = 'asterveil:settings';
-          const current = (await chrome.storage.local.get(key))[key];
-          await chrome.storage.local.set({
-            [key]: {
-              ...current,
-              revision: current.revision + 1,
-              colorMode: scheme,
-              background: { image, enabled: true, overlay: 5 },
-            },
-          });
-        },
-        { image, scheme },
-      );
-      await page.waitForFunction(
-        ({ image, scheme }) =>
-          document.documentElement.getAttribute('data-asterveil-scheme') === scheme &&
-          document.querySelector('style[data-asterveil="background"]')?.textContent.includes(image),
-        { image, scheme },
-      );
-      const background = await card.evaluate((node) => getComputedStyle(node).backgroundColor);
-      assert.ok(background !== 'transparent' && background !== 'rgba(0, 0, 0, 0)');
-      await page.screenshot({ path: resolve(out, `${product}-background-${scheme}.png`) });
-    }
-    await page.setViewportSize({ width: 390, height: 844 });
-    assert.equal(await card.evaluate((node) => node.scrollWidth <= node.clientWidth), true);
-    await page
-      .locator('.settings-dialog')
-      .screenshot({ path: resolve(out, `${product}-mobile.png`) });
-    await page.getByRole('button', { name: '关闭设置', exact: true }).click();
     await page.goto(`${origin}/problem/1/answers`);
     await settings();
     assert.equal(await page.locator(descriptionButton).count(), 0);
     assert.equal(await page.locator('#native-source').isVisible(), true);
     assert.deepEqual(errors, []);
     console.log(
-      `${product}: source/description copy, independent switches, native-button restoration, cancellation, cross-tab/contest support and responsive settings passed.`,
+      `${product}: merged helper copy buttons, helper switch, theme independence and page scoping passed.`,
     );
   } finally {
     await context.close();

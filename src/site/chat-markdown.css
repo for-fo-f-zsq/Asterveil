@@ -1,0 +1,10 @@
+/* A message the module re-rendered as markdown scrolls on its own. */
+[data-asterveil-chat-markdown] {
+  max-height: min(60vh, 480px);
+  overflow: auto;
+  white-space: normal;
+}
+
+.chat-message:has([data-asterveil-chat-markdown]) .copy-chat-message {
+  display: inline-flex;
+}

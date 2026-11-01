@@ -3,11 +3,13 @@ import { defineContentScript } from 'wxt/utils/define-content-script';
 import { ModuleRuntime } from '../core/runtime';
 import { Scope } from '../core/scope';
 import { modules } from '../features/registry';
+import { requestSettings } from '../platform/settings-client';
 import { localSettings, watchSettings } from '../platform/settings-repository';
 import { mountUpdateGuard } from '../platform/update-guard';
 import { pdfEnabled } from '../shared/edition';
 import { editionCheckMessage, editionStopMessage } from '../shared/edition-coordination';
 import type { Settings } from '../shared/settings';
+import { mountClickRipple } from '../site/click-ripple';
 import { createCodeEditorLayout } from '../site/code-editor';
 import { createHomeLayout } from '../site/home-layout';
 import { contentMatches, resolveSite } from '../site/target';
@@ -31,6 +33,7 @@ export default defineContentScript({
     let theme: ReturnType<typeof createPageTheme> | undefined;
     let homeLayout: ReturnType<typeof createHomeLayout> | undefined;
     let codeEditorLayout: ReturnType<typeof createCodeEditorLayout> | undefined;
+    let clickRipple: ReturnType<typeof mountClickRipple> | undefined;
     let domReady = false;
     let settingsResolved = false;
     const lifetime = new AbortController();
@@ -40,9 +43,10 @@ export default defineContentScript({
     const reconcile = () => {
       if (ctx.isInvalid || lifetime.signal.aborted) return;
       const url = new URL(location.href);
-      if (settingsResolved) theme?.update(url, settings);
+      if (settingsResolved) theme?.update(settings);
       homeLayout?.update(url, settings);
       codeEditorLayout?.update(url, settings?.enabled ?? false);
+      clickRipple?.update(settings?.enabled ?? false);
       if (settings) {
         if (domReady) runtime.reconcile(url, settings);
         floatingSettings?.setAppearance(settings.accentColor, settings.colorMode);
@@ -65,8 +69,9 @@ export default defineContentScript({
       domReady = true;
       initRoot();
       floatingSettings = mountFloatingSettings(uiScope);
-      homeLayout = createHomeLayout(uiScope);
+      homeLayout = createHomeLayout(uiScope, requestSettings);
       codeEditorLayout = createCodeEditorLayout(uiScope);
+      clickRipple = mountClickRipple(uiScope);
       reconcile();
     };
     if (document.readyState === 'loading') {

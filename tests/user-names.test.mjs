@@ -12,6 +12,7 @@ import ts from 'typescript';
 const root = fileURLToPath(new URL('../', import.meta.url));
 const require = createRequire(import.meta.url);
 const base = new URL('https://jx.7fa4.cn:8888/');
+const plain = (value) => JSON.parse(JSON.stringify(value));
 const names = new Map([
   ['1', '示例甲'],
   ['2', '示例乙'],
@@ -91,6 +92,7 @@ test('the encrypted database shares a pinned source and enables the module witho
   assert.equal(database.records, source.records);
   assert.ok(source.records > 3000);
   assert.equal(database.records, source.gradeRecords);
+  assert.equal(database.version, 2);
   assert.equal(source.sourceAcademicYear, 2025);
   assert.equal(source.academicYear, 2026);
   assert.equal(database.academicYear, source.academicYear);
@@ -115,6 +117,53 @@ test('the encrypted database shares a pinned source and enables the module witho
       'user-names'
     ],
     false,
+  );
+});
+
+test('graduation years derive grades at runtime and round-trip through the source parser', () => {
+  const load = loader();
+  const year = load('src/shared/user-grade-year.ts');
+  const { parseUserNameSource } = load('src/shared/user-name-sources.ts');
+  assert.equal(
+    year.userGradeAcademicYear,
+    Math.max(year.firstUserGradeAcademicYear, year.currentUserGradeAcademicYear()),
+  );
+  assert.equal(year.currentUserGradeAcademicYear(new Date(2026, 7, 31, 23, 59)), 2025);
+  assert.equal(year.currentUserGradeAcademicYear(new Date(2026, 8, 1, 0, 0)), 2026);
+  for (const key of ['x4', 'x5', 'x6', 'c1', 'c2', 'c3', 'g1', 'g2', 'g3', 'd1', 'd2', 'd3', 'd4']) {
+    const graduateYear = year.userGradeGraduateYear(key);
+    assert.equal(typeof graduateYear, 'number');
+    assert.equal(year.graduateYearUserGrade(graduateYear), key);
+  }
+  for (const key of ['by', 'jl', 'uk', 'clear']) assert.equal(year.userGradeGraduateYear(key), undefined);
+  const entries = parseUserNameSource(
+    JSON.stringify({
+      academicYear: year.userGradeAcademicYear,
+      users: {
+        1: { name: '示例甲', graduateYear: 2029 },
+        2: { name: '示例乙', colorKey: 'jl' },
+        3: { name: '示例丙', graduateYear: '2022' },
+      },
+    }),
+  );
+  assert.deepEqual(plain(entries), [
+    ['1', '示例甲', year.graduateYearUserGrade(2029)],
+    ['2', '示例乙', 'jl'],
+    ['3', '示例丙', 'by'],
+  ]);
+  assert.throws(
+    () =>
+      parseUserNameSource(
+        JSON.stringify({ users: { 1: { name: '示例甲', graduateYear: 1800 } } }),
+      ),
+    /无效的毕业年份/,
+  );
+  assert.throws(
+    () =>
+      parseUserNameSource(
+        JSON.stringify({ users: { 1: { name: '示例甲', graduateYear: 2029, colorKey: 'g2' } } }),
+      ),
+    /年级不一致/,
   );
 });
 

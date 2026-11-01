@@ -1,0 +1,163 @@
+/* biome-ignore-all lint/style/noDescendingSpecificity: The week-row density override out-specifies the shared card-table cell padding on purpose. */
+/* Study plans: the floating date directory and the week/day table roles. */
+.asterveil-plan-index {
+  position: fixed;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  width: 148px;
+  max-width: calc(100vw - 24px);
+  max-height: calc(100dvh - 24px);
+  padding: 10px;
+  border: 1px solid var(--av-border, #e1e7ef);
+  border-radius: var(--av-radius-panel, 12px);
+  background: var(--av-paper, #fff);
+  box-shadow: var(--av-shadow, 0 3px 14px rgb(35 55 80 / 4%));
+}
+
+.asterveil-plan-index[hidden] {
+  display: none;
+}
+
+.asterveil-plan-handle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+  width: 100%;
+  padding: 4px 10px 12px;
+  border: 0;
+  border-radius: var(--av-radius-control, 7px);
+  background: transparent;
+  color: var(--av-heading, #34465a);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+}
+
+.asterveil-plan-resize {
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  height: 8px;
+  cursor: ns-resize;
+  touch-action: none;
+  outline: none;
+}
+
+.asterveil-plan-resize.top {
+  top: 0;
+}
+
+.asterveil-plan-resize.bottom {
+  bottom: 0;
+}
+
+.asterveil-plan-resize:focus-visible {
+  box-shadow: inset 0 -2px var(--av-focus, #7198c0);
+}
+
+.asterveil-plan-index.is-dragging .asterveil-plan-handle {
+  cursor: grabbing;
+}
+
+.asterveil-plan-handle:focus-visible {
+  outline: 2px solid var(--av-focus, #7198c0);
+  outline-offset: -2px;
+}
+
+.asterveil-plan-dates {
+  display: grid;
+  gap: 4px;
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+}
+
+.asterveil-plan-dates button {
+  padding: 8px;
+  border: 1px solid transparent;
+  border-radius: var(--av-radius-control, 7px);
+  background: transparent;
+  color: var(--av-muted, #647184);
+  font: inherit;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.asterveil-plan-dates button:is(:hover, [aria-current]) {
+  background: var(--av-tint, #edf4fb);
+  color: var(--av-accent, #3b82c4);
+}
+
+.asterveil-plan-dates button.is-today {
+  border-color: var(--av-border, #e1e7ef);
+  color: var(--av-accent, #3b82c4);
+  font-weight: 700;
+}
+
+.asterveil-plan-dates button:focus-visible {
+  outline: 2px solid var(--av-focus, #7198c0);
+  outline-offset: -2px;
+}
+
+tr[data-type="day"] {
+  scroll-margin-top: 112px;
+}
+
+tr.asterveil-plan-target > td {
+  background: var(--av-tint, #edf4fb);
+}
+
+/* Card tables own a shared cell padding; week rows override it by matching the
+   same surface scope so the sheet does not need an important flag. */
+html .ui.main.container > .padding > .ui.table > tbody > tr[data-type="week"] > td {
+  padding-top: 14px;
+  padding-bottom: 14px;
+  border-top: 1px solid var(--av-border, #e1e7ef);
+  background: var(--av-tint, #edf4fb);
+  color: var(--av-heading, #34465a);
+  font-weight: 600;
+}
+
+.ui.main.container .ui.table tr[data-type="day"] > td:first-child {
+  color: var(--av-muted, #647184);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.ui.main.container .ui.table tr.asterveil-today > td {
+  background: var(--av-surface, #f9fbfd);
+}
+
+.ui.main.container .ui.table tr.asterveil-today > td:first-child {
+  box-shadow: inset 3px 0 var(--av-accent, #3b82c4);
+  color: var(--av-accent, #3b82c4);
+  font-weight: 700;
+}
+
+.ui.main.container pre.plan {
+  font: inherit;
+  line-height: 1.7;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.ui.main.container pre.plan:empty::before {
+  content: "—";
+  color: #b0bac7;
+}
+
+.ui.main.container :is(#start-line, #end-line) > td {
+  background: var(--av-surface, #f9fbfd);
+  color: var(--av-accent, #3b82c4);
+  font-size: 12px;
+  text-align: center;
+}

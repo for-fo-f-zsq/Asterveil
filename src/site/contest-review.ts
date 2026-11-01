@@ -1,4 +1,6 @@
 import type { Scope } from '../core/scope';
+import css from './contest-review.css?inline';
+import { useInlineStyle } from './inline-style';
 
 export async function enhanceContestReview(scope: Scope, url: URL): Promise<void> {
   const exercises = [
@@ -48,6 +50,8 @@ export async function enhanceContestReview(scope: Scope, url: URL): Promise<void
     button.append(symbol, label);
     buttons.push(button);
   }
+  if (!buttons.length) return;
+  useInlineStyle(scope, 'contest-review', css);
   exercises.parentElement?.append(...buttons);
   scope.defer(() => {
     for (const button of buttons) button.remove();

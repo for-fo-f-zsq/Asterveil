@@ -37,10 +37,15 @@ h2 {
 }
 .settings-card {
   padding: 20px;
-  border: 1px solid var(--av-border);
+  border: 1px solid color-mix(in srgb, var(--av-border) 72%, transparent);
   border-radius: 14px;
-  background: var(--av-paper);
-  box-shadow: 0 3px 12px #18202e04;
+  /* Cards are panes on the frosted dialog, not plates on top of it: one flat
+     low-alpha paper fill, no gradient. A nested backdrop-filter would re-sample
+     what the dialog has already blurred, so the pane relies on its alpha. */
+  background: color-mix(in srgb, var(--av-paper) 52%, transparent);
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, #fff 55%, transparent),
+    0 3px 12px #18202e04;
   transition:
     border-color calc(180ms * var(--av-motion, 1)) ease,
     background-color calc(180ms * var(--av-motion, 1)) ease;
@@ -50,6 +55,16 @@ h2 {
   grid-template-columns: auto minmax(0, 1fr) 42px;
   align-items: center;
   gap: 12px 16px;
+}
+.fork-notice {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.fork-notice p {
+  margin: 0;
+  font-size: 13px;
+  color: var(--av-muted);
 }
 .update-label {
   color: var(--av-heading);
@@ -115,37 +130,6 @@ h2 {
 .module,
 .master {
   min-height: 70px;
-}
-.problem-copy-options {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px 32px;
-  margin-top: 18px;
-  padding-top: 16px;
-  border-top: 1px solid var(--av-border);
-}
-.problem-copy-options label {
-  display: inline-flex;
-  flex: 0 0 auto;
-  align-items: center;
-  gap: 10px;
-  min-height: 30px;
-  color: var(--av-text);
-  font-size: 13px;
-  cursor: pointer;
-}
-.problem-copy-options:where(:disabled) label {
-  color: var(--av-muted);
-  cursor: default;
-}
-@media (max-width: 650px) {
-  .problem-copy-options {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 8px;
-    margin-top: 16px;
-    padding-top: 12px;
-  }
 }
 .row:hover {
   border-color: color-mix(in srgb, var(--av-accent) 35%, var(--av-border));
@@ -259,14 +243,111 @@ h2 {
   font-size: 12px;
   line-height: 1.7;
 }
-.background-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  align-items: center;
-  margin: 20px 0;
+.appearance-pair {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  align-items: stretch;
 }
-.background-actions button,
+.palette {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 18px;
+}
+.palette .swatches {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  row-gap: 18px;
+  margin-top: 0;
+}
+.background-preview {
+  position: relative;
+  margin-top: 16px;
+}
+.background-pick {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+  height: 132px;
+  padding: 0;
+  overflow: hidden;
+  border: 1px dashed color-mix(in srgb, var(--av-border) 90%, transparent);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--av-border) 16%, transparent);
+  color: var(--av-muted);
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+  transition:
+    color calc(180ms * var(--av-motion, 1)) ease,
+    border-color calc(180ms * var(--av-motion, 1)) ease,
+    background-color calc(180ms * var(--av-motion, 1)) ease;
+}
+.background-pick:hover {
+  border-color: var(--av-accent);
+  background: var(--av-tint);
+  color: var(--av-accent);
+}
+.background-pick:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+.background-pick-icon {
+  width: 22px;
+  height: 22px;
+}
+.background-pick .background-image {
+  width: 100%;
+  height: 100%;
+  border-radius: 9px;
+  object-fit: cover;
+}
+.background-settings[data-has-image="true"] .background-pick {
+  border-style: solid;
+  border-color: color-mix(in srgb, var(--av-border) 72%, transparent);
+  background: transparent;
+}
+.background-settings[data-has-image="true"] .background-pick-icon,
+.background-settings[data-has-image="true"] .background-pick-label {
+  display: none;
+}
+.background-remove[hidden],
+.background-image[hidden] {
+  display: none;
+}
+.background-remove {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: rgb(15 23 42 / 62%);
+  color: #fff;
+  cursor: pointer;
+  opacity: 0;
+  transition:
+    opacity calc(160ms * var(--av-motion, 1)) ease,
+    background-color calc(160ms * var(--av-motion, 1)) ease;
+}
+.background-remove .ui-icon {
+  width: 14px;
+  height: 14px;
+}
+.background-preview:hover .background-remove,
+.background-remove:focus-visible {
+  opacity: 1;
+}
+.background-remove:hover {
+  background: rgb(15 23 42 / 82%);
+}
 .update-actions button {
   padding: 8px 14px;
   border: 1px solid var(--av-border);
@@ -275,26 +356,20 @@ h2 {
   color: var(--av-accent);
   cursor: pointer;
 }
-.background-image-actions {
-  display: flex;
-  gap: 8px;
-}
-.background-actions button:enabled:hover,
 .update-actions button:enabled:hover {
   background: var(--av-tint);
 }
-.background-actions button:disabled,
 .update-actions button:disabled {
   opacity: 0.45;
   cursor: default;
 }
-.background-overlay-label {
+.background-opacity-label {
   display: flex;
   justify-content: space-between;
   color: var(--av-text);
   font-size: 13px;
 }
-#background-overlay {
+#background-opacity {
   width: 100%;
   margin: 12px 0 0;
   accent-color: var(--av-accent);
@@ -526,19 +601,6 @@ input[role="switch"]:checked {
 }
 input[role="switch"]:checked::after {
   transform: translateX(18px);
-}
-.problem-copy-options input[role="switch"] {
-  order: 1;
-  flex-basis: 32px;
-  width: 32px;
-  height: 18px;
-}
-.problem-copy-options input[role="switch"]::after {
-  width: 12px;
-  height: 12px;
-}
-.problem-copy-options input[role="switch"]:checked::after {
-  transform: translateX(14px);
 }
 input:disabled {
   opacity: 0.45;
@@ -1353,128 +1415,79 @@ input:disabled {
   background: var(--av-tint);
   color: var(--av-accent);
 }
-.settings-view[data-section="appearance"] .module:not([data-module-id="ui-polish"]),
+.settings-view[data-section="appearance"] .module:not([data-module-id="ui-theme"]),
 .settings-view[data-section="better-names"] .module:not([data-module-id="user-names"]),
 .settings-view[data-section="modules"] .module[data-module-id="user-names"],
-.settings-view[data-section="modules"] .module[data-module-id="ui-polish"],
+.settings-view[data-section="modules"] .module[data-module-id="ui-theme"],
 .settings-view:not([data-section="appearance"]) .palette,
 .settings-view:not([data-section="appearance"]) .color-mode,
 .settings-view:not([data-section="appearance"]) .background-settings,
 .settings-view:not([data-section="about"]) .about,
-.settings-view:not([data-section="home"]) .home-layout-settings,
 .settings-view:not([data-section="better-names"]) .name-sources,
 .settings-view:not([data-section="better-names"]) .name-palette,
-.settings-view[data-section="about"] #modules,
-.settings-view[data-section="home"] #modules {
+.settings-view[data-section="about"] #modules {
   display: none;
 }
-/* biome-ignore lint/style/noDescendingSpecificity: The section visibility rule intentionally overrides this layout. */
-.home-layout-settings,
-#home-layout-controls {
-  display: grid;
-  gap: 16px;
-}
-.home-layout-heading {
+.helper-groups {
   display: flex;
-  justify-content: flex-end;
-  align-items: start;
-  gap: 16px;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 14px;
 }
-#home-layout-reset,
-.home-order-button,
-.home-layout-row select {
-  flex-shrink: 0;
-  padding: 6px 8px;
-  border: 1px solid var(--av-border);
-  border-radius: 7px;
-  background: var(--av-paper);
-  color: var(--av-accent);
-  font: inherit;
+.helper-group {
+  display: grid;
+  grid-template-columns: 62px minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+}
+.helper-group-title {
+  margin: 0;
+  color: var(--av-muted);
   font-size: 12px;
+  font-weight: 600;
+}
+.helper-items {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+}
+.helper-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  min-height: 28px;
+  padding: 2px 6px 2px 10px;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--av-border) 30%, transparent);
   cursor: pointer;
 }
-#home-layout-reset {
+.helper-row:hover {
+  background: color-mix(in srgb, var(--av-accent) 12%, transparent);
+}
+.helper-name {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--av-text);
+  font-size: 13px;
+  text-overflow: ellipsis;
   white-space: nowrap;
 }
-.home-column h2 {
-  margin-bottom: 10px;
-  font-size: 14px;
+.helper-row:hover .helper-name {
+  color: var(--av-accent);
 }
-.home-column ol {
-  list-style: none;
-  margin: 0;
-  padding: 0 0 18px;
-  min-height: 48px;
-  border-bottom: 2px solid transparent;
-}
-.home-column ol:empty::before {
-  content: "将板块拖到这里，或通过所在栏选项移入";
-  display: block;
-  padding: 12px 0;
-  color: var(--av-muted);
-  font-size: 12px;
-}
-.home-layout-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  min-height: 48px;
-  padding: 8px 0;
-  border-top: 2px solid transparent;
-  border-bottom: 1px solid var(--av-border);
-}
-.home-section-label {
-  display: flex;
-  align-items: center;
-  flex: 1;
-  gap: 8px;
-  min-width: 0;
-  font-size: 13px;
-  cursor: pointer;
-}
-/* biome-ignore lint/style/noDescendingSpecificity: Home checkboxes and palette radios are disjoint controls. */
-.home-section-label input {
-  width: 16px;
-  height: 16px;
-  flex-shrink: 0;
-  accent-color: var(--av-accent);
-}
-.home-drag-handle {
-  color: var(--av-muted);
-  cursor: grab;
-}
-.home-drag-handle .ui-icon {
-  width: 16px;
-  height: 22px;
-}
-.home-order-button {
-  display: grid;
-  place-items: center;
-  padding: 5px;
-}
-.home-order-button .ui-icon {
-  width: 18px;
+.helper-row input[role="switch"] {
+  flex: 0 0 30px;
+  width: 30px;
   height: 18px;
 }
-.home-order-button:enabled:hover,
-#home-layout-reset:enabled:hover {
-  background: var(--av-tint);
+.helper-row input[role="switch"]::after {
+  width: 12px;
+  height: 12px;
 }
-.home-order-button:disabled,
-#home-layout-controls:disabled {
-  opacity: 0.5;
-}
-.home-layout-row.is-hidden .home-section-label span {
-  color: var(--av-muted);
-}
-.home-layout-row.is-dragging {
-  opacity: 0.45;
-}
-.home-layout-row.drop-before {
-  border-top-color: var(--av-accent);
-}
-.home-column ol.drop-end {
-  border-bottom-color: var(--av-accent);
+.helper-row input[role="switch"]:checked::after {
+  transform: translateX(12px);
 }
 :focus-visible {
   outline: 2px solid var(--av-accent);
@@ -1544,6 +1557,12 @@ input:disabled {
   .swatches {
     gap: 8px;
   }
+  .appearance-pair {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .palette {
+    gap: 12px;
+  }
   .swatch {
     font-size: 11px;
   }
@@ -1571,14 +1590,12 @@ input:disabled {
   .community-action-name {
     font-size: 11px;
   }
-  .home-layout-row {
-    gap: 5px;
+  .helper-group {
+    grid-template-columns: 1fr;
+    gap: 2px;
   }
-  .home-drag-handle {
-    display: none;
-  }
-  .home-section-label {
-    gap: 5px;
+  .helper-items {
+    grid-template-columns: minmax(0, 1fr);
   }
   .settings-view {
     padding: 12px;
@@ -1608,4 +1625,53 @@ input:disabled {
   input[role="switch"]::after {
     display: none;
   }
+}
+/* ------------------------------------------------------------ light depth */
+/* Glass and short motion cues only; geometry, colours and states stay above. */
+@keyframes av-card-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+.settings-card {
+  animation: av-card-in calc(260ms * var(--av-motion, 1)) cubic-bezier(0.16, 1, 0.3, 1) both;
+  transition:
+    transform calc(200ms * var(--av-motion, 1)) cubic-bezier(0.2, 0.8, 0.2, 1),
+    box-shadow calc(200ms * var(--av-motion, 1)) ease,
+    border-color calc(180ms * var(--av-motion, 1)) ease,
+    background-color calc(180ms * var(--av-motion, 1)) ease;
+}
+@media (hover: hover) {
+  .settings-card:hover {
+    transform: translateY(-2px);
+    border-color: color-mix(in srgb, var(--av-accent) 30%, var(--av-border));
+    box-shadow: 0 16px 36px -24px rgb(17 32 51 / 42%);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  @media (hover: hover) {
+    .settings-card:hover {
+      transform: none;
+    }
+  }
+}
+/* biome-ignore lint/style/noDescendingSpecificity: earlier switch variants
+   only set geometry; this rule adds motion and does not compete on size. */
+input[role="switch"]::after {
+  transition: transform calc(240ms * var(--av-motion, 1)) cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+input[role="switch"]:checked {
+  background: linear-gradient(
+    96deg,
+    var(--av-accent),
+    color-mix(in srgb, var(--av-accent) 72%, var(--av-heading))
+  );
+}
+/* biome-ignore lint/style/noDescendingSpecificity: the checked variant above
+   sizes the thumb; this keeps the glow that belongs to the generic state. */
+input[role="switch"]:checked::after {
+  box-shadow:
+    0 1px 3px rgb(0 0 0 / 12%),
+    0 0 0 3px color-mix(in srgb, var(--av-paper) 55%, transparent);
 }

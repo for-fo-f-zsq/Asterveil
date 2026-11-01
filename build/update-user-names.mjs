@@ -1,11 +1,13 @@
 import { execFileSync } from 'node:child_process';
-import { mkdir, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import {
   advanceUserGrade,
   firstUserGradeAcademicYear,
   isUserGradeAcademicYear,
   userGradeAcademicYear,
+  userGradeGraduateYear,
 } from '../src/shared/user-grade-year.ts';
+import { normalizeOfficialUserRecords } from './encrypt-user-names.mjs';
 
 const repository = 'https://github.com/DestinyleSnowy/Better-Names-for-7FA4';
 const revision =
@@ -58,19 +60,39 @@ const add = (entries) => {
 add(database.users ?? database);
 add(special.users ?? {});
 if (!names.size) throw new Error('The upstream database contains no names.');
+
+// Store the high-school graduation year for enrolled cohorts; special statuses keep their key.
+const official = new Map();
+for (const [id, name] of names) {
+  const grade = advanceUserGrade(grades.get(id) ?? 'uk', sourceAcademicYear);
+  const graduateYear = userGradeGraduateYear(grade);
+  official.set(id, graduateYear === undefined ? { name, colorKey: grade } : { name, graduateYear });
+}
+
+let supplemented = 0;
+const supplementPath = process.argv[4];
+if (supplementPath) {
+  const supplement = JSON.parse(await readFile(supplementPath, 'utf8'));
+  const records = normalizeOfficialUserRecords(supplement?.users ?? supplement);
+  for (const [id, record] of Object.entries(records)) {
+    if (official.has(id)) continue;
+    official.set(id, record);
+    supplemented += 1;
+  }
+}
+
 const directory = new URL('../src/data/', import.meta.url);
 await mkdir(directory, { recursive: true });
 await writeFile(
   new URL('user-names.json', directory),
   `${JSON.stringify(
-    Object.fromEntries([...names].sort(([a], [b]) => Number(a) - Number(b))),
+    {
+      academicYear: userGradeAcademicYear,
+      users: Object.fromEntries([...official].sort(([a], [b]) => Number(a) - Number(b))),
+    },
     null,
     2,
   )}\n`,
-);
-await writeFile(
-  new URL('user-grades.json', directory),
-  `${JSON.stringify(Object.fromEntries([...grades].sort(([a], [b]) => Number(a) - Number(b)).map(([id, grade]) => [id, advanceUserGrade(grade, sourceAcademicYear)])), null, 2)}\n`,
 );
 await writeFile(
   new URL('user-names.source.json', directory),
@@ -80,8 +102,9 @@ await writeFile(
       revision,
       sourceAcademicYear,
       academicYear: userGradeAcademicYear,
-      records: names.size,
-      gradeRecords: grades.size,
+      records: official.size,
+      gradeRecords: official.size,
+      supplementRecords: supplemented,
       files: [
         'Better-Names-for-7FA4/data/users.json',
         'Better-Names-for-7FA4/data/special_users.json',
@@ -91,4 +114,6 @@ await writeFile(
     2,
   )}\n`,
 );
-console.log(`Updated ${names.size} local records from ${revision}. Encrypt before publishing.`);
+console.log(
+  `Updated ${official.size} local records from ${revision} (${supplemented} supplemented). Encrypt before publishing.`,
+);

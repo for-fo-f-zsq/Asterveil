@@ -1,6 +1,6 @@
 {
   "name": "asterveil",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "private": true,
   "license": "Apache-2.0",
   "description": "The next generation of Better Names.",
@@ -9,6 +9,7 @@
     "node": ">=22.13.0"
   },
   "scripts": {
+    "audit:site": "node build/audit-site-classes.mjs",
     "dev": "wxt",
     "build": "npm run build:full",
     "build:light": "wxt build --mode light",

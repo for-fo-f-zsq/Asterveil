@@ -1,3 +1,4 @@
+/* biome-ignore-all lint/complexity/noImportantStyles: The extension owns these buttons; the site-wide theme paints every button and must not repaint them. */
 .ui.buttons.asterveil-problem-copy-actions > .ui.button {
   border-radius: 0;
 }
@@ -10,4 +11,23 @@
   > .ui.button:nth-last-child(1 of .ui.button:not([hidden], .hidden)) {
   border-top-right-radius: inherit;
   border-bottom-right-radius: inherit;
+}
+
+/* The copy actions the module adds to the problem toolbar. */
+.ui.main.container
+.ui.button:is([data-asterveil="copy-problem-source"], [data-asterveil="copy-problem-description"]) {
+  background-color: var(--av-solid, var(--av-accent, #3b82c4)) !important;
+  color: var(--av-on-accent, #fff) !important;
+}
+
+.ui.main.container
+  .ui.button:is(
+    [data-asterveil="copy-problem-source"],
+    [data-asterveil="copy-problem-description"]
+  ):is(:hover, :focus-visible) {
+  background-color: color-mix(
+    in srgb,
+    var(--av-solid, var(--av-accent, #3b82c4)) 94%,
+    #000
+  ) !important;
 }

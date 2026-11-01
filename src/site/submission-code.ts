@@ -1,9 +1,12 @@
 import type { Scope } from '../core/scope';
 import { copyText } from '../platform/clipboard';
+import { useInlineStyle } from './inline-style';
+import css from './submission-code.css?inline';
 
 export function enhanceSubmissionCode(scope: Scope): void {
   const container = document.querySelector<HTMLElement>('#submission_content');
   if (!container) return;
+  useInlineStyle(scope, 'submission-code', css);
   const selector = '[data-asterveil="copy-submission-code"]';
   let frame = 0;
   let resetTimer: ReturnType<typeof setTimeout> | undefined;
